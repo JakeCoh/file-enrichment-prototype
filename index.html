@@ -1,0 +1,1737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FullContact - File Enrichment</title>
+<link rel="stylesheet" href="Platform.css">
+<style>
+  @import url('https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic&subset=latin');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Lato', 'Helvetica Neue', Arial, Helvetica, sans-serif; background: #f0f2f5; color: rgba(0,0,0,0.87); font-size: 14px; line-height: 1.4285em; }
+
+  /* === Semantic UI overrides to prevent conflicts === */
+  .sidebar.ui, .ui.sidebar { display: block !important; }
+  .ui.table { margin: 0; border: none; box-shadow: none; }
+  .ui.segment { box-shadow: 0 1px 2px 0 rgba(34,36,38,0.15); }
+  .ui.modal { box-shadow: 1px 3px 3px 0 rgba(0,0,0,0.2), 1px 3px 15px 2px rgba(0,0,0,0.2); }
+  .ui.form .field { margin: 0 0 1em; }
+  .ui.progress { margin: 0; background: rgba(0,0,0,0.1); }
+  .ui.progress .bar { background: #00c4d4; border-radius: .28571429rem; min-width: 0; }
+
+  /* ========== Sidebar ========== */
+  .sidebar {
+    position: fixed; left: 0; top: 0; bottom: 0; width: 200px;
+    background: #1b2534; color: #fff; z-index: 100; overflow-y: auto;
+  }
+  .sidebar-logo {
+    padding: 14px 14px; display: flex; align-items: center;
+  }
+  .sidebar-logo img { height: 28px; width: auto; }
+  .sidebar-section { padding: 6px 0; }
+  .sidebar-section-title {
+    padding: 14px 16px 6px; font-size: 10px; text-transform: uppercase;
+    color: #5a6a7e; letter-spacing: 1.2px; font-weight: 600;
+  }
+  .sidebar-item {
+    display: flex; align-items: center; gap: 10px; padding: 9px 16px;
+    color: #8a9ab0; font-size: 13.5px; cursor: pointer; transition: all 0.15s;
+    text-decoration: none; position: relative; white-space: nowrap;
+  }
+  .sidebar-item:hover { color: #c8d4e2; background: rgba(255,255,255,0.04); }
+  .sidebar-item.active { color: #fff; background: rgba(0,196,212,0.12); }
+  .sidebar-item.active::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+    width: 3px; background: #00c4d4; border-radius: 0 2px 2px 0;
+  }
+  .sidebar-item .si-icon { width: 20px; height: 20px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+  .sidebar-item .si-icon svg { width: 16px; height: 16px; fill: currentColor; }
+  .sidebar-item .arrow { margin-left: auto; font-size: 9px; opacity: 0.5; }
+  .sidebar-item.sub { padding-left: 46px; font-size: 13px; }
+  .sidebar-item.sub .si-icon { width: 16px; height: 16px; }
+  .sidebar-item.sub .si-icon svg { width: 14px; height: 14px; }
+
+  /* ========== Main ========== */
+  .main { margin-left: 200px; min-height: 100vh; }
+  .topbar {
+    background: #fff; padding: 12px 28px; display: flex; align-items: center;
+    justify-content: space-between; border-bottom: 1px solid #e2e6ea;
+    position: sticky; top: 0; z-index: 50; min-height: 48px;
+  }
+  .topbar-left { font-size: 14px; color: #666; font-style: italic; }
+  .user-email { color: #333; font-size: 13.5px; font-weight: 400; }
+  .user-email::after { content: ' \u25BE'; font-size: 10px; color: #999; }
+  .content { padding: 0; }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* ========== LANDING ========== */
+  .hero {
+    background: linear-gradient(135deg, #1b2534 0%, #243352 50%, #1b2534 100%);
+    color: #fff; padding: 48px 44px; position: relative; overflow: hidden; min-height: 260px;
+  }
+  .hero-label { font-size: 11px; text-transform: uppercase; letter-spacing: 2.5px; color: #8a9ab0; margin-bottom: 10px; font-weight: 600; }
+  .hero h1 { font-size: 32px; font-weight: 700; margin-bottom: 24px; line-height: 1.2; }
+  .hero-btn {
+    background: #00c4d4; color: #fff; border: none; padding: 12px 24px;
+    border-radius: 4px; font-size: 13px; font-weight: 700; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 8px; letter-spacing: 0.5px;
+    text-transform: uppercase; transition: background 0.2s;
+  }
+  .hero-btn:hover { background: #00b0be; }
+  .hero-btn svg { width: 14px; height: 14px; fill: #fff; }
+  .hero-note { font-size: 11px; color: #6a7a8e; margin-top: 12px; }
+  .hero-image {
+    position: absolute; right: 40px; top: 50%; transform: translateY(-50%);
+    width: 320px; height: 220px; display: flex; align-items: center; justify-content: center;
+  }
+  .hero-visual {
+    width: 180px; height: 180px; border-radius: 50%;
+    background: linear-gradient(135deg, rgba(0,196,212,0.3), rgba(0,100,180,0.4));
+    border: 3px solid rgba(0,196,212,0.4);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 60px rgba(0,196,212,0.15);
+  }
+  .hero-visual-inner {
+    width: 100px; height: 100px; border-radius: 50%;
+    background: linear-gradient(135deg, #1a3a5c, #0a2a4c);
+    border: 2px solid rgba(0,196,212,0.3);
+  }
+  .steps-section { padding: 36px 44px; background: #fff; }
+  .steps-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px; }
+  .step-card {}
+  .step-label { font-size: 10px; text-transform: uppercase; color: #999; letter-spacing: 1.5px; margin-bottom: 8px; font-weight: 600; }
+  .step-card h3 { font-size: 15px; font-weight: 600; margin-bottom: 8px; color: #1b2534; }
+  .step-card p { font-size: 12.5px; color: #777; line-height: 1.55; }
+  .step-card a { color: #00c4d4; font-size: 12.5px; text-decoration: none; }
+  .step-card a:hover { text-decoration: underline; }
+
+  /* Chat bubble */
+  .chat-bubble {
+    position: fixed; bottom: 24px; right: 24px; width: 52px; height: 52px;
+    background: #00c4d4; border-radius: 50%; cursor: pointer; z-index: 200;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 16px rgba(0,196,212,0.4); transition: transform 0.2s;
+  }
+  .chat-bubble:hover { transform: scale(1.08); }
+  .chat-bubble svg { width: 24px; height: 24px; fill: #fff; }
+
+  /* ========== UPLOAD ========== */
+  .upload-page { padding: 28px 40px; }
+  .upload-page h2 { font-size: 20px; font-weight: 700; color: #1b2534; margin-bottom: 24px; }
+  .upload-zone {
+    border: 2.5px dashed #7dd8e8; border-radius: .28571429rem; padding: 50px 40px;
+    text-align: center; background: #f8fcfe; cursor: pointer;
+    transition: all 0.2s; position: relative;
+  }
+  .upload-zone:hover, .upload-zone.dragover { background: #eef8fb; border-color: #00c4d4; }
+  .upload-zone h3 { font-size: 24px; color: #00c4d4; font-weight: 600; margin-bottom: 4px; }
+  .upload-zone .subtitle { font-size: 14px; color: #7dd8e8; margin-bottom: 28px; }
+  .upload-cloud {
+    width: 110px; height: 90px; margin: 0 auto 20px; position: relative;
+  }
+  .upload-cloud svg { width: 110px; height: 90px; }
+  .upload-zone .max-size { color: #00c4d4; font-size: 13px; margin-top: 8px; }
+  .upload-zone .info-badge {
+    position: absolute; top: 14px; right: 14px; width: 24px; height: 24px;
+    background: #00c4d4; color: #fff; border-radius: 50%; font-size: 14px;
+    display: flex; align-items: center; justify-content: center; font-weight: 700;
+    font-style: italic; font-family: Georgia, serif;
+  }
+  .upload-links {
+    display: flex; justify-content: space-between; margin-top: 20px; padding: 4px 0;
+  }
+  .upload-links a {
+    color: #00c4d4; font-size: 13px; text-decoration: none;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .upload-links a:hover { text-decoration: underline; }
+  .upload-links a svg { width: 14px; height: 14px; fill: #00c4d4; }
+  .upload-spinner {
+    display: none; width: 50px; height: 50px; margin: 20px auto;
+    border: 3px solid #e0e0e0; border-top: 3px solid #00c4d4;
+    border-radius: 50%; animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #fileInput { display: none; }
+  .file-selected-display {
+    display: none; padding: 14px 16px; background: #e8f7fa; border-radius: 6px;
+    margin-top: 16px; font-size: 13px; color: #1b2534; align-items: center; gap: 12px;
+  }
+  .file-selected-display.active { display: flex; }
+  .file-selected-display .file-details { flex: 1; }
+  .file-selected-display .file-details .name { font-weight: 600; }
+  .file-selected-display .file-details .size { color: #888; font-size: 11px; }
+  .file-selected-display .remove-file {
+    color: #d44; cursor: pointer; font-size: 18px; width: 24px; height: 24px;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* ========== REVIEW FILE DETAILS ========== */
+  .review-page { padding: 28px 40px; }
+  .review-page h2 { font-size: 20px; font-weight: 700; color: #1b2534; margin-bottom: 24px; }
+  .file-info-bar {
+    background: #f9fafb; border: 1px solid rgba(34,36,38,0.15); border-radius: .28571429rem;
+    padding: 1em 1.5em; display: flex; justify-content: space-between;
+    align-items: center; margin-bottom: 2em;
+    box-shadow: 0 1px 2px 0 rgba(34,36,38,0.15);
+  }
+  .file-info-bar .file-name { font-size: 15px; font-weight: 600; color: #1b2534; }
+  .file-info-bar .file-rows { font-size: 15px; font-weight: 600; color: #1b2534; }
+  .separator-section { margin-bottom: 28px; }
+  .separator-section h3 { font-size: 15px; font-weight: 700; color: #1b2534; margin-bottom: 16px; }
+  .radio-group { display: flex; flex-direction: column; gap: 14px; padding-left: 4px; }
+  .radio-item {
+    display: flex; align-items: center; gap: 10px; font-size: 14px; color: #444; cursor: pointer;
+  }
+  .radio-item input[type="radio"] {
+    -webkit-appearance: none; appearance: none; width: 17px; height: 17px;
+    border: 1px solid #d4d4d5; border-radius: 500rem; cursor: pointer; position: relative;
+    background: #fff; transition: border .1s ease, background .1s ease;
+  }
+  .radio-item input[type="radio"]:hover { border-color: rgba(34,36,38,0.35); }
+  .radio-item input[type="radio"]:checked { border-color: #00c4d4; }
+  .radio-item input[type="radio"]:checked::after {
+    content: ''; position: absolute; top: 3px; left: 3px;
+    width: 9px; height: 9px; background: #00c4d4; border-radius: 500rem;
+  }
+  .radio-item .rec-label { color: #888; font-weight: 400; }
+  .custom-input {
+    font-family: 'Lato', sans-serif;
+    width: 40px; padding: .67857143em .5em; border: 1px solid rgba(34,36,38,0.15);
+    border-radius: .28571429rem; text-align: center; font-size: 14px; margin-left: 4px;
+    outline: none; transition: border-color .1s ease;
+  }
+  .custom-input:focus { border-color: #00c4d4; }
+  .header-section { margin-bottom: 32px; border-top: 1px solid #eee; padding-top: 24px; }
+  .header-section h3 { font-size: 15px; font-weight: 700; color: #1b2534; margin-bottom: 14px; }
+  .header-options { display: flex; gap: 28px; }
+  .btn-row { display: flex; justify-content: flex-end; gap: 16px; margin-top: 32px; }
+  .btn-secondary {
+    font-family: 'Lato', sans-serif;
+    background: #fff; color: rgba(0,0,0,0.6); border: 1px solid rgba(34,36,38,0.15);
+    padding: .78571429em 1.5em; border-radius: .28571429rem;
+    font-size: 14px; font-weight: 700; cursor: pointer;
+    box-shadow: 0 0 0 1px rgba(34,36,38,0.15) inset;
+    transition: background .1s ease, color .1s ease, box-shadow .1s ease;
+  }
+  .btn-secondary:hover { background: #f8f8f8; color: rgba(0,0,0,0.8); box-shadow: 0 0 0 1px rgba(34,36,38,0.35) inset; }
+  .btn-primary {
+    font-family: 'Lato', sans-serif;
+    background: #00c4d4; color: #fff; border: none;
+    padding: .78571429em 1.5em; border-radius: .28571429rem;
+    font-size: 14px; font-weight: 700; cursor: pointer;
+    box-shadow: 0 0 0 0 rgba(34,36,38,0.15) inset;
+    transition: background .1s ease, box-shadow .1s ease;
+  }
+  .btn-primary:hover { background: #00b0be; }
+  .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  /* ========== MAP FIELDS ========== */
+  .map-page { padding: 28px 40px; }
+  .map-page h2 { font-size: 20px; font-weight: 700; color: #1b2534; margin-bottom: 20px; }
+  .map-table {
+    width: 100%; border-collapse: separate; border-spacing: 0;
+    background: #fff; border: 1px solid rgba(34,36,38,0.15); border-radius: .28571429rem;
+  }
+  .map-table th {
+    text-align: left; padding: .92857143em 1.2em; font-size: 14px; font-weight: 700;
+    background: #f9fafb; border-bottom: 1px solid rgba(34,36,38,0.1); color: #00c4d4;
+  }
+  .map-table td {
+    padding: .78571429em 1.2em; border-top: 1px solid rgba(34,36,38,0.1);
+    font-size: 14px; color: rgba(0,0,0,0.87);
+  }
+  .map-table tbody tr:first-child td { border-top: none; }
+  .map-table td:first-child { color: rgba(0,0,0,0.87); font-weight: 500; }
+  .map-table select {
+    font-family: 'Lato', sans-serif;
+    width: 200px; padding: .67857143em 2.1em .67857143em 1em;
+    border: 1px solid rgba(34,36,38,0.15); border-radius: .28571429rem;
+    font-size: 13.5px; color: rgba(0,0,0,0.87); background: #fff; cursor: pointer;
+    -webkit-appearance: none; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23888'%3E%3Cpath d='M2 4l4 4 4-4'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 10px center;
+    box-shadow: none; transition: border-color .1s ease;
+    line-height: 1.21428571em;
+  }
+  .map-table select:focus { border-color: #00c4d4; outline: none; }
+  .map-table select:hover { border-color: rgba(34,36,38,0.35); }
+  .field-tip {
+    font-size: 11px; color: rgba(0,0,0,0.45); margin-top: 3px;
+    font-style: italic; line-height: 1.3;
+  }
+  .status-mapped { color: #1b2534; font-weight: 500; }
+  .status-not-mapped { color: #aaa; }
+  .status-ignored { color: #aaa; font-style: italic; }
+
+  /* ========== CONFIRM ========== */
+  .confirm-page { padding: 28px 40px; }
+  .confirm-page h2 { font-size: 20px; font-weight: 700; color: #1b2534; margin-bottom: 24px; }
+  .confirm-card {
+    border: 1px solid rgba(34,36,38,0.15); border-radius: .28571429rem;
+    padding: 1.5em 2em; margin-bottom: 1.25em;
+    box-shadow: 0 1px 2px 0 rgba(34,36,38,0.15); background: #fff;
+  }
+  .confirm-card h3 { font-size: 15px; font-weight: 700; color: #1b2534; margin-bottom: 12px; }
+  .confirm-card .mapped-list { font-size: 15px; color: #1b2534; font-weight: 600; }
+  .confirm-stats { margin-top: 28px; }
+  .confirm-stat {
+    display: flex; justify-content: space-between; padding: 12px 0;
+    border-bottom: 1px solid #f0f2f5; font-size: 14.5px;
+  }
+  .confirm-stat:last-child { border-bottom: none; }
+  .confirm-stat .label { color: #444; }
+  .confirm-stat .value { font-weight: 600; color: #1b2534; }
+  .confirm-stat.cost .label { color: #e8a020; font-weight: 700; }
+  .warning-banner {
+    background: #1b2534; color: #fff; padding: 1em 1.5em;
+    border-radius: .28571429rem; font-size: 13.5px; text-align: center; margin-bottom: 1.25em;
+  }
+  .warning-banner a { color: #00c4d4; text-decoration: underline; }
+  .agree-row {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 14px; color: #444;
+  }
+  .agree-row input[type="checkbox"] {
+    -webkit-appearance: none; appearance: none; width: 19px; height: 19px;
+    border: 1px solid #00c4d4; border-radius: .21428571rem; cursor: pointer;
+    position: relative; background: #fff; flex-shrink: 0;
+    transition: border .1s ease, background .1s ease;
+  }
+  .agree-row input[type="checkbox"]:checked {
+    background: #00c4d4; border-color: #00c4d4;
+  }
+  .agree-row input[type="checkbox"]:checked::after {
+    content: ''; position: absolute; top: 2px; left: 5.5px;
+    width: 5.5px; height: 10px; border: solid #fff; border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+
+  /* ========== MODALS ========== */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(100,110,130,0.65);
+    z-index: 200; align-items: center; justify-content: center;
+  }
+  .modal-overlay.active { display: flex; }
+  .modal {
+    background: #fff; border-radius: .28571429rem; padding: 48px 60px; text-align: center;
+    max-width: 480px; width: 90%;
+    box-shadow: 1px 3px 3px 0 rgba(0,0,0,0.2), 1px 3px 15px 2px rgba(0,0,0,0.2);
+  }
+  /* iOS-style segmented spinner */
+  .ios-spinner { width: 56px; height: 56px; margin: 0 auto 28px; position: relative; }
+  .ios-spinner .bar {
+    position: absolute; left: 50%; top: 50%; width: 3px; height: 14px;
+    margin-left: -1.5px; margin-top: -24px; border-radius: 2px;
+    background: #bbb; transform-origin: center 24px;
+    animation: ios-fade 1s linear infinite;
+  }
+  .ios-spinner .bar:nth-child(1) { transform: rotate(0deg); animation-delay: 0s; }
+  .ios-spinner .bar:nth-child(2) { transform: rotate(30deg); animation-delay: -0.917s; }
+  .ios-spinner .bar:nth-child(3) { transform: rotate(60deg); animation-delay: -0.833s; }
+  .ios-spinner .bar:nth-child(4) { transform: rotate(90deg); animation-delay: -0.75s; }
+  .ios-spinner .bar:nth-child(5) { transform: rotate(120deg); animation-delay: -0.667s; }
+  .ios-spinner .bar:nth-child(6) { transform: rotate(150deg); animation-delay: -0.583s; }
+  .ios-spinner .bar:nth-child(7) { transform: rotate(180deg); animation-delay: -0.5s; }
+  .ios-spinner .bar:nth-child(8) { transform: rotate(210deg); animation-delay: -0.417s; }
+  .ios-spinner .bar:nth-child(9) { transform: rotate(240deg); animation-delay: -0.333s; }
+  .ios-spinner .bar:nth-child(10) { transform: rotate(270deg); animation-delay: -0.25s; }
+  .ios-spinner .bar:nth-child(11) { transform: rotate(300deg); animation-delay: -0.167s; }
+  .ios-spinner .bar:nth-child(12) { transform: rotate(330deg); animation-delay: -0.083s; }
+  @keyframes ios-fade {
+    0% { background: #333; } 50%, 100% { background: #ddd; }
+  }
+  .modal h3 { font-size: 17px; font-weight: 600; color: #1b2534; margin-bottom: 4px; }
+  .modal p { font-size: 14px; color: #666; }
+  .delete-modal {
+    background: #fff; border-radius: .28571429rem; padding: 36px 44px; text-align: center;
+    max-width: 420px; width: 90%;
+    box-shadow: 1px 3px 3px 0 rgba(0,0,0,0.2), 1px 3px 15px 2px rgba(0,0,0,0.2);
+  }
+  .delete-modal p { font-size: 15px; color: #1b2534; margin-bottom: 24px; line-height: 1.5; }
+  .delete-modal .info-sm {
+    display: inline-flex; width: 16px; height: 16px; background: #00c4d4;
+    color: #fff; border-radius: 50%; font-size: 10px; align-items: center;
+    justify-content: center; vertical-align: middle; margin-left: 2px;
+    font-style: italic; font-family: Georgia, serif;
+  }
+  .delete-modal .modal-btns { display: flex; gap: 12px; justify-content: center; }
+
+  /* ========== REPORTS ========== */
+  .reports-page { padding: 28px 40px; }
+  .reports-page h2 { font-size: 20px; font-weight: 700; color: #1b2534; margin-bottom: 20px; }
+  .reports-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0; }
+  .filter-select {
+    font-family: 'Lato', sans-serif;
+    padding: .67857143em 2.1em .67857143em 1em;
+    border: 1px solid rgba(34,36,38,0.15); border-radius: .28571429rem;
+    font-size: 13.5px; background: #fff; color: rgba(0,0,0,0.87);
+    -webkit-appearance: none; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23888'%3E%3Cpath d='M2 4l4 4 4-4'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 10px center;
+    line-height: 1.21428571em; cursor: pointer;
+  }
+  .bulk-actions { display: flex; gap: 8px; }
+  .btn-download-all {
+    font-family: 'Lato', sans-serif;
+    background: #00c4d4; color: #fff; border: none;
+    padding: .58928571em 1.125em; border-radius: .28571429rem;
+    font-size: 12.5px; font-weight: 700; cursor: pointer;
+  }
+  .btn-download-all:hover { background: #00b0be; }
+  .btn-delete-all {
+    font-family: 'Lato', sans-serif;
+    background: #fff; color: rgba(0,0,0,0.6); border: 1px solid rgba(34,36,38,0.15);
+    padding: .58928571em 1.125em; border-radius: .28571429rem;
+    font-size: 12.5px; font-weight: 700; cursor: pointer;
+    box-shadow: 0 0 0 1px rgba(34,36,38,0.15) inset;
+  }
+  .btn-delete-all:hover { background: #f8f8f8; }
+  .reports-table {
+    width: 100%; border-collapse: separate; border-spacing: 0;
+    margin-top: 12px; background: #fff;
+    border: 1px solid rgba(34,36,38,0.15); border-radius: .28571429rem;
+  }
+  .reports-table th {
+    text-align: left; padding: .92857143em .78571429em; font-size: 13.5px; font-weight: 700;
+    background: #f9fafb; border-bottom: 1px solid rgba(34,36,38,0.1);
+    color: rgba(0,0,0,0.87); border-left: none;
+  }
+  .reports-table td {
+    padding: .78571429em .78571429em; border-top: 1px solid rgba(34,36,38,0.1);
+    font-size: 13.5px; color: rgba(0,0,0,0.87); vertical-align: middle;
+  }
+  .reports-table tbody tr:first-child td { border-top: none; }
+  .reports-table tr:hover td { background: rgba(0,0,50,0.02); }
+  .reports-table input[type="checkbox"] {
+    -webkit-appearance: none; appearance: none; width: 17px; height: 17px;
+    border: 1px solid #d4d4d5; border-radius: .21428571rem; cursor: pointer;
+    position: relative; background: #fff; transition: border .1s ease, background .1s ease;
+  }
+  .reports-table input[type="checkbox"]:hover { border-color: rgba(34,36,38,0.35); }
+  .reports-table input[type="checkbox"]:checked {
+    background: #00c4d4; border-color: #00c4d4;
+  }
+  .reports-table input[type="checkbox"]:checked::after {
+    content: ''; position: absolute; top: 2px; left: 4.5px;
+    width: 5.5px; height: 9px; border: solid #fff; border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+  .status-cell { display: flex; flex-direction: column; gap: 4px; }
+  .status-text { font-size: 13px; font-weight: 500; }
+  .status-text.st-processing { color: #00a0a0; }
+  .status-text.st-queued { color: #999; }
+  .status-text.st-completed { color: #2a9d5c; }
+  .status-text.st-failed { color: #d44; }
+  .progress-bar {
+    width: 80px; height: 4px; background: rgba(0,0,0,0.1);
+    border-radius: .28571429rem; overflow: hidden;
+  }
+  .progress-bar .fill {
+    height: 100%; border-radius: .28571429rem; transition: width .3s ease;
+  }
+  .fill-cyan { background: #00c4d4; }
+  .fill-green { background: #21ba45; }
+  .action-icon {
+    background: none; border: none; cursor: pointer; padding: 4px;
+    color: #999; display: inline-flex; align-items: center; justify-content: center;
+    transition: color 0.15s;
+  }
+  .action-icon:hover { color: #444; }
+  .action-icon.disabled { opacity: 0.3; cursor: default; pointer-events: none; }
+  .action-icon svg { width: 18px; height: 18px; fill: currentColor; }
+  .pagination { display: flex; justify-content: center; gap: 2px; margin-top: 20px; align-items: center; }
+  .pg-btn {
+    font-family: 'Lato', sans-serif;
+    width: 30px; height: 30px; border: none; border-radius: 500rem;
+    background: transparent; color: rgba(0,0,0,0.5); font-size: 13px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .1s ease;
+  }
+  .pg-btn:hover { background: rgba(0,0,0,0.05); }
+  .pg-btn.active { background: #00c4d4; color: #fff; }
+  .pg-btn.nav { font-size: 16px; color: rgba(0,0,0,0.3); }
+
+  /* ========== DATA QUALITY SUMMARY ========== */
+  .summary-page { padding: 28px 40px; position: relative; }
+  .summary-page h2 { font-size: 20px; font-weight: 700; color: #1b2534; margin-bottom: 4px; }
+  .summary-page .file-ref { font-size: 14px; color: #444; margin-bottom: 28px; }
+  .lets-talk-btn {
+    font-family: 'Lato', sans-serif;
+    position: absolute; right: 40px; top: 28px; background: #fff;
+    border: 1px solid rgba(34,36,38,0.15); padding: .58928571em 1.125em;
+    border-radius: .28571429rem; font-size: 12.5px; cursor: pointer;
+    display: flex; align-items: center; gap: 6px; font-weight: 700;
+    color: rgba(0,0,0,0.6); box-shadow: 0 0 0 1px rgba(34,36,38,0.15) inset;
+    transition: background .1s ease;
+  }
+  .lets-talk-btn:hover { background: #f8f8f8; color: rgba(0,0,0,0.8); }
+  .lets-talk-btn svg { width: 14px; height: 14px; fill: #1b2534; }
+  .summary-section { margin-bottom: 28px; }
+  .summary-section h3 {
+    font-size: 13px; font-weight: 800; text-transform: uppercase; color: #1b2534;
+    margin-bottom: 14px; letter-spacing: 0.3px;
+  }
+  .outcome-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .outcome-card {
+    background: #f9fafb; border: 1px solid rgba(34,36,38,0.15);
+    border-radius: .28571429rem; padding: 1.5em; text-align: center;
+    box-shadow: 0 1px 2px 0 rgba(34,36,38,0.15);
+  }
+  .outcome-card .oc-label {
+    font-size: 12px; font-weight: 800; text-transform: uppercase; color: #1b2534;
+    letter-spacing: 0.5px; margin-bottom: 8px;
+  }
+  .outcome-card .oc-value { font-size: 30px; font-weight: 700; color: #00c4d4; }
+  .outcome-card .oc-warning { font-size: 11px; color: #d44; margin-top: 4px; }
+  .quality-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .quality-card {
+    background: #f9fafb; border: 1px solid rgba(34,36,38,0.15);
+    border-radius: .28571429rem; padding: 1.2em; text-align: center;
+    box-shadow: 0 1px 2px 0 rgba(34,36,38,0.15);
+  }
+  .quality-card .qc-label { font-size: 12px; color: #777; margin-bottom: 6px; }
+  .quality-card .qc-value { font-size: 22px; font-weight: 700; color: #00c4d4; }
+  .quality-card .qc-badge {
+    display: inline-block; margin-top: 6px; padding: .2em .833em;
+    border-radius: .28571429rem; background: #d4f5e4; color: #21ba45;
+    font-size: 11px; font-weight: 700;
+  }
+  .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; max-width: 420px; }
+
+  /* ========== INPUT FIELDS MODAL ========== */
+  .fields-modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(80,90,105,0.75);
+    z-index: 200; align-items: flex-start; justify-content: center; padding-top: 0;
+  }
+  .fields-modal-overlay.active { display: flex; }
+  .fields-modal-close {
+    position: fixed; top: 24px; right: 28px; z-index: 210;
+    background: none; border: none; cursor: pointer; color: #c0c8d4;
+    font-size: 36px; line-height: 1; transition: color 0.15s;
+  }
+  .fields-modal-close:hover { color: #fff; }
+  .fields-modal {
+    background: #fff; border-radius: .28571429rem; width: 520px; max-width: 92vw;
+    max-height: 80vh; margin-top: 10vh; overflow: hidden; display: flex; flex-direction: column;
+    box-shadow: 1px 3px 3px 0 rgba(0,0,0,0.2), 1px 3px 15px 2px rgba(0,0,0,0.2);
+  }
+  .fields-modal h2 {
+    font-size: 22px; font-weight: 700; color: rgba(0,0,0,0.87);
+    text-align: center; padding: 28px 28px 20px; flex-shrink: 0;
+  }
+  .fields-modal-body {
+    overflow-y: auto; padding: 0 28px 28px; flex: 1;
+  }
+  .field-card {
+    display: flex; gap: 16px; padding: 18px 0;
+    border-bottom: 1px solid rgba(34,36,38,0.08);
+  }
+  .field-card:last-child { border-bottom: none; }
+  .field-card-icon {
+    width: 72px; height: 72px; flex-shrink: 0; background: #1b2534;
+    border-radius: .28571429rem; display: flex; align-items: center; justify-content: center;
+  }
+  .field-card-icon svg { width: 36px; height: 36px; fill: #00c4d4; }
+  .field-card-content { flex: 1; }
+  .field-card-content h4 { font-size: 15px; font-weight: 700; color: rgba(0,0,0,0.87); margin-bottom: 4px; }
+  .field-card-content p { font-size: 13px; color: rgba(0,0,0,0.6); line-height: 1.45; margin-bottom: 4px; }
+  .field-card-content .example { font-size: 12.5px; color: #00c4d4; font-style: italic; }
+
+  /* ========== MATCH TOOLTIP ========== */
+  .match-info {
+    position: relative; display: inline-flex; align-items: center;
+    margin-left: 4px; cursor: help;
+  }
+  .match-info .match-icon {
+    width: 16px; height: 16px; background: #00c4d4; color: #fff; border-radius: 50%;
+    font-size: 10px; display: inline-flex; align-items: center; justify-content: center;
+    font-weight: 700; font-style: italic; font-family: Georgia, serif;
+  }
+  .match-info .match-tooltip {
+    display: none; position: absolute; bottom: calc(100% + 8px); left: 50%;
+    transform: translateX(-50%); width: 320px; background: #1b2534; color: #fff;
+    padding: 14px 16px; border-radius: .28571429rem; font-size: 12.5px;
+    line-height: 1.55; z-index: 10;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+  }
+  .match-info .match-tooltip::after {
+    content: ''; position: absolute; top: 100%; left: 50%;
+    transform: translateX(-50%); border: 6px solid transparent;
+    border-top-color: #1b2534;
+  }
+  .match-info:hover .match-tooltip { display: block; }
+  .confirm-estimate {
+    background: #f0f7f8; border: 1px solid rgba(0,196,212,0.2);
+    border-radius: .28571429rem; padding: 14px 18px; margin-top: 16px;
+    font-size: 13.5px; line-height: 1.6; color: rgba(0,0,0,0.75);
+  }
+  .confirm-estimate strong { color: #1b2534; }
+  .confirm-estimate .cost-highlight {
+    font-size: 18px; font-weight: 700; color: #00c4d4;
+  }
+
+  /* ========== OUTPUT FIELDS MODAL ========== */
+  .output-modal {
+    background: #fff; border-radius: .28571429rem; width: 580px; max-width: 92vw;
+    max-height: 80vh; margin-top: 10vh; overflow: hidden; display: flex; flex-direction: column;
+    box-shadow: 1px 3px 3px 0 rgba(0,0,0,0.2), 1px 3px 15px 2px rgba(0,0,0,0.2);
+  }
+  .output-modal h2 {
+    font-size: 20px; font-weight: 700; color: rgba(0,0,0,0.87);
+    padding: 24px 28px 8px; flex-shrink: 0;
+  }
+  .output-modal .output-dev-note {
+    margin: 0 28px 16px; padding: 10px 12px;
+  }
+  .output-modal-body {
+    overflow-y: auto; padding: 0 28px 28px; flex: 1;
+  }
+  .bundle-section { margin-bottom: 24px; }
+  .bundle-header {
+    font-size: 14px; font-weight: 700; color: #1b2534; margin-bottom: 10px;
+    padding-bottom: 6px; border-bottom: 2px solid #00c4d4;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .bundle-header svg { width: 18px; height: 18px; fill: #00c4d4; }
+  .bundle-fields { display: flex; flex-wrap: wrap; gap: 6px; }
+  .bundle-field {
+    background: #f0f7f8; border: 1px solid rgba(0,196,212,0.2);
+    border-radius: .28571429rem; padding: 4px 10px;
+    font-size: 12.5px; color: rgba(0,0,0,0.7);
+  }
+  .bundle-category { margin-bottom: 12px; }
+  .bundle-category-name {
+    font-size: 13px; font-weight: 600; color: rgba(0,0,0,0.6);
+    margin-bottom: 6px;
+  }
+
+  /* ========== PASTE SCREEN ========== */
+  .paste-page { padding: 28px 40px; }
+  .paste-page h2 { font-size: 20px; font-weight: 700; color: #1b2534; margin-bottom: 24px; }
+  .paste-container {
+    border: 1px solid rgba(34,36,38,0.15); border-radius: .28571429rem;
+    overflow: hidden; box-shadow: 0 1px 2px 0 rgba(34,36,38,0.15);
+  }
+  .paste-container textarea {
+    font-family: 'Lato', sans-serif;
+    width: 100%; height: 240px; border: none; padding: 16px 20px;
+    font-size: 14px; color: rgba(0,0,0,0.87); resize: vertical;
+    outline: none; line-height: 1.5;
+  }
+  .paste-container textarea::placeholder { color: rgba(0,0,0,0.4); }
+  .paste-footer {
+    background: #1b2534; padding: 10px 16px; display: flex;
+    justify-content: flex-end; align-items: center;
+  }
+  .paste-footer .btn-continue {
+    font-family: 'Lato', sans-serif;
+    background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.6);
+    border: 1px solid rgba(255,255,255,0.2); padding: .58928571em 1.5em;
+    border-radius: .28571429rem; font-size: 13.5px; font-weight: 700;
+    cursor: pointer; transition: all .15s;
+  }
+  .paste-footer .btn-continue.active {
+    background: #00c4d4; color: #fff; border-color: #00c4d4;
+  }
+  .paste-footer .btn-continue.active:hover { background: #00b0be; }
+
+  /* ========== UPGRADE PLAN MODAL ========== */
+  .upgrade-modal {
+    background: #fff; border-radius: .28571429rem; width: 520px; max-width: 92vw;
+    box-shadow: 1px 3px 3px 0 rgba(0,0,0,0.2), 1px 3px 15px 2px rgba(0,0,0,0.2);
+    overflow: hidden;
+  }
+  .upgrade-modal-header {
+    background: #1b2534; color: #fff; padding: 20px 28px;
+  }
+  .upgrade-modal-header h2 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+  .upgrade-modal-header p { font-size: 13px; color: rgba(255,255,255,0.6); }
+  .upgrade-modal-body { padding: 24px 28px; }
+  .upgrade-current {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 0; border-bottom: 1px solid rgba(34,36,38,0.1);
+    font-size: 14px; color: rgba(0,0,0,0.87);
+  }
+  .upgrade-current .uc-label { color: rgba(0,0,0,0.6); }
+  .upgrade-current .uc-value { font-weight: 700; }
+  .upgrade-current .uc-value.highlight { color: #00c4d4; }
+  .upgrade-add { padding: 20px 0; }
+  .upgrade-add-label { font-size: 14px; font-weight: 700; color: rgba(0,0,0,0.87); margin-bottom: 12px; }
+  .upgrade-stepper {
+    display: flex; align-items: center; gap: 0; margin-bottom: 12px;
+  }
+  .upgrade-stepper button {
+    font-family: 'Lato', sans-serif;
+    width: 40px; height: 40px; border: 1px solid rgba(34,36,38,0.15);
+    background: #f9fafb; font-size: 20px; font-weight: 700; cursor: pointer;
+    color: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center;
+    transition: background .1s;
+  }
+  .upgrade-stepper button:first-child { border-radius: .28571429rem 0 0 .28571429rem; }
+  .upgrade-stepper button:last-child { border-radius: 0 .28571429rem .28571429rem 0; }
+  .upgrade-stepper button:hover { background: #e8e8e8; }
+  .upgrade-stepper button:disabled { opacity: 0.3; cursor: not-allowed; }
+  .upgrade-stepper .stepper-value {
+    height: 40px; min-width: 100px; border-top: 1px solid rgba(34,36,38,0.15);
+    border-bottom: 1px solid rgba(34,36,38,0.15); display: flex;
+    align-items: center; justify-content: center; font-size: 16px;
+    font-weight: 700; color: rgba(0,0,0,0.87); background: #fff;
+  }
+  .upgrade-summary {
+    background: #f9fafb; border: 1px solid rgba(34,36,38,0.1);
+    border-radius: .28571429rem; padding: 16px 20px; margin-top: 8px;
+  }
+  .upgrade-summary-row {
+    display: flex; justify-content: space-between; font-size: 13.5px;
+    padding: 6px 0; color: rgba(0,0,0,0.6);
+  }
+  .upgrade-summary-row .usr-value { font-weight: 700; color: rgba(0,0,0,0.87); }
+  .upgrade-summary-row.total {
+    border-top: 1px solid rgba(34,36,38,0.15); margin-top: 6px; padding-top: 10px;
+    font-size: 15px; font-weight: 700; color: rgba(0,0,0,0.87);
+  }
+  .upgrade-summary-row.total .usr-value { color: #00c4d4; font-size: 16px; }
+  .upgrade-modal-footer {
+    padding: 16px 28px; display: flex; justify-content: flex-end; gap: 12px;
+    border-top: 1px solid rgba(34,36,38,0.1);
+  }
+  .dev-note {
+    background: #fffde7; border: 1px dashed #f0c040; border-radius: 3px;
+    padding: 4px 8px; font-size: 11px; color: #8a6d00; font-family: monospace;
+    display: inline-block; margin-left: 6px; vertical-align: middle;
+    line-height: 1.3; position: relative;
+  }
+  .dev-note::before {
+    content: 'DEV:'; font-weight: 700; margin-right: 4px; color: #c49000;
+  }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <img src="fc-logo.png" alt="FullContact">
+  </div>
+  <div class="sidebar-section">
+    <!-- Usage -->
+    <div class="sidebar-item" onclick="navigate('landing')">
+      <div class="si-icon"><svg viewBox="0 0 16 16"><rect x="1" y="8" width="3" height="7" rx="0.5"/><rect x="6.5" y="4" width="3" height="11" rx="0.5"/><rect x="12" y="1" width="3" height="14" rx="0.5"/></svg></div>
+      <span>Usage</span>
+    </div>
+    <!-- Customer Recognition -->
+    <div class="sidebar-item">
+      <div class="si-icon"><svg viewBox="0 0 16 16"><path d="M2 2h10c.6 0 1 .4 1 1v7c0 .6-.4 1-1 1H5l-3 3V3c0-.6.4-1 1-1z"/></svg></div>
+      <span>Customer Recognition</span>
+      <span class="arrow">&#9656;</span>
+    </div>
+    <!-- File Enrichment -->
+    <div class="sidebar-item active" id="nav-enrich" onclick="navigate('upload')">
+      <div class="si-icon"><svg viewBox="0 0 20 18" fill="currentColor" stroke="currentColor"><!-- document --><path d="M1.5 1.5h7l3 3v11.5h-10z" fill="none" stroke-width="1.3" stroke-linejoin="round"/><path d="M8.5 1.5v3h3" fill="none" stroke-width="1.3" stroke-linejoin="round"/><!-- sparkle 1: five-pointed star top-right --><path d="M15.5.5l.6 1.3 1.4.2-1 1 .2 1.4-1.2-.7-1.2.7.2-1.4-1-1 1.4-.2z" fill="currentColor" stroke="none"/><!-- sparkle 2: diamond upper-mid --><path d="M12.5 6l.7-1.2.7 1.2-.7 1.2z" fill="currentColor" stroke="none"/><path d="M12.5 6l1.2-.7-1.2.7-1.2-.7z" fill="currentColor" stroke="none"/><!-- sparkle 3: starburst mid-right --><path d="M18 8l0-1.5 0 1.5 1.5 0-1.5 0 0 1.5 0-1.5-1.5 0z" stroke-width="1.1" fill="none" stroke-linecap="round"/><!-- sparkle 4: diamond lower --><path d="M14.5 11.5l.6-1 .6 1-.6 1z" fill="currentColor" stroke="none"/><path d="M14.5 11.5l1-.6-1 .6-1-.6z" fill="currentColor" stroke="none"/><!-- sparkle 5: small starburst bottom --><path d="M12 15l0-1.2 0 1.2 1.2 0-1.2 0 0 1.2 0-1.2-1.2 0z" stroke-width="1" fill="none" stroke-linecap="round"/></svg></div>
+      <span>File Enrichment</span>
+      <span class="arrow">&#9662;</span>
+    </div>
+    <!-- Reports sub -->
+    <div class="sidebar-item sub" id="nav-reports" onclick="navigate('reports')">
+      <div class="si-icon"><svg viewBox="0 0 16 16"><path d="M3 1h7l3 3v11H3V1zm7 0v3h3" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></div>
+      <span>Reports</span>
+    </div>
+    <!-- Match Test -->
+    <div class="sidebar-item">
+      <div class="si-icon"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M5 8l2 2 4-4" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span>Match Test</span>
+      <span class="arrow">&#9656;</span>
+    </div>
+    <!-- Files -->
+    <div class="sidebar-item">
+      <div class="si-icon"><svg viewBox="0 0 16 16"><path d="M1 4l2-2h4l1 2h6v10H1V4z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg></div>
+      <span>Files</span>
+      <span class="arrow">&#9656;</span>
+    </div>
+    <!-- API Search -->
+    <div class="sidebar-item">
+      <div class="si-icon"><svg viewBox="0 0 16 16"><circle cx="6.5" cy="6.5" r="5" fill="none" stroke="currentColor" stroke-width="1.3"/><line x1="10.5" y1="10.5" x2="14.5" y2="14.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></div>
+      <span>API Search</span>
+    </div>
+    <!-- API Demo -->
+    <div class="sidebar-item">
+      <div class="si-icon"><svg viewBox="0 0 16 16"><rect x="1" y="2" width="14" height="12" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M4 7l2 2-2 2M9 11h3" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span>API Demo</span>
+    </div>
+    <!-- Snowflake -->
+    <div class="sidebar-item">
+      <div class="si-icon"><svg viewBox="0 0 16 16"><line x1="8" y1="1" x2="8" y2="15" stroke="currentColor" stroke-width="1.2"/><line x1="2" y1="4.5" x2="14" y2="11.5" stroke="currentColor" stroke-width="1.2"/><line x1="2" y1="11.5" x2="14" y2="4.5" stroke="currentColor" stroke-width="1.2"/><line x1="6" y1="1.5" x2="8" y2="3" stroke="currentColor" stroke-width="1"/><line x1="10" y1="1.5" x2="8" y2="3" stroke="currentColor" stroke-width="1"/><line x1="6" y1="14.5" x2="8" y2="13" stroke="currentColor" stroke-width="1"/><line x1="10" y1="14.5" x2="8" y2="13" stroke="currentColor" stroke-width="1"/></svg></div>
+      <span>Snowflake</span>
+    </div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">My Account</div>
+    <!-- Account -->
+    <div class="sidebar-item">
+      <div class="si-icon"><svg viewBox="0 0 16 16"><circle cx="8" cy="5" r="3" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M2 15c0-3.3 2.7-6 6-6s6 2.7 6 6" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></div>
+      <span>Account</span>
+    </div>
+    <!-- Settings -->
+    <div class="sidebar-item">
+      <div class="si-icon"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="2.5" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M2.9 2.9l1.4 1.4M11.7 11.7l1.4 1.4M13.1 2.9l-1.4 1.4M4.3 11.7l-1.4 1.4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></div>
+      <span>Settings</span>
+    </div>
+    <!-- Plan & Billing -->
+    <div class="sidebar-item">
+      <div class="si-icon"><svg viewBox="0 0 16 16"><path d="M3 1h10v14H3V1z" fill="none" stroke="currentColor" stroke-width="1.3"/><line x1="5.5" y1="5" x2="10.5" y2="5" stroke="currentColor" stroke-width="1"/><line x1="5.5" y1="7.5" x2="10.5" y2="7.5" stroke="currentColor" stroke-width="1"/><line x1="5.5" y1="10" x2="8.5" y2="10" stroke="currentColor" stroke-width="1"/></svg></div>
+      <span>Plan & Billing</span>
+    </div>
+    <!-- Documentation -->
+    <div class="sidebar-item">
+      <div class="si-icon"><svg viewBox="0 0 16 16"><path d="M2 2h5l1 1v11H2V2z" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M8 3h5l1 1v11H8V3z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></div>
+      <span>Documentation</span>
+    </div>
+    <!-- Privacy Preferences -->
+    <div class="sidebar-item">
+      <div class="si-icon"><svg viewBox="0 0 16 16"><path d="M8 1L2 4v4c0 4 2.7 7 6 8 3.3-1 6-4 6-8V4L8 1z" fill="none" stroke="currentColor" stroke-width="1.3"/></svg></div>
+      <span>Privacy Preferences</span>
+    </div>
+  </div>
+</nav>
+
+<!-- Main -->
+<div class="main">
+  <div class="topbar" id="topbar">
+    <div class="topbar-left" id="topbarLeft"></div>
+    <div class="user-email">manjushri.rathi@moz.com</div>
+  </div>
+
+  <div class="content">
+
+    <!-- LANDING -->
+    <div class="screen active" id="screen-landing">
+      <div class="hero">
+        <div class="hero-label">File Enrichment</div>
+        <h1>Enrich Customer Records</h1>
+        <button class="hero-btn" onclick="navigate('upload')">
+          UPLOAD YOUR FILE
+          <svg viewBox="0 0 14 14"><path d="M1 7h12M8 2l5 5-5 5" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="hero-note"></div>
+        <div class="hero-image">
+          <div class="hero-visual"><div class="hero-visual-inner"></div></div>
+        </div>
+      </div>
+      <div class="steps-section">
+        <div class="steps-grid">
+          <div class="step-card">
+            <div class="step-label">Step 1</div>
+            <h3>Upload Customer File</h3>
+            <p>Provide a .CSV file of the records you would like to Enrich. We recommend at least 100 records on the file.</p>
+            <a href="https://platform.fullcontact.com/match/Input_Fields_Template.csv?v=db61f5303ad4e239d0a6a56fb9eee6b4">Download .CSV Template</a>
+          </div>
+          <div class="step-card">
+            <div class="step-label">Step 2</div>
+            <h3>Map Valid Inputs</h3>
+            <p>Confirm your input fields, such as emails, phone numbers, social URLs, MAIDs, and more.</p>
+            <a href="#" onclick="event.preventDefault();document.getElementById('fieldsModal').classList.add('active')">View 5 fields</a>
+          </div>
+          <div class="step-card">
+            <div class="step-label">Step 3</div>
+            <h3>View Reports</h3>
+            <p>Download the enriched file, view analytics on the file quality and manage reports.</p>
+            <a href="#" onclick="event.preventDefault();document.getElementById('outputFieldsModal').classList.add('active')">View output fields</a>
+          </div>
+          <div class="step-card">
+            <div class="step-label">Step 4</div>
+            <h3>Share With Your Team</h3>
+            <p>Complete your report and easily share the results with your team.</p>
+          </div>
+        </div>
+      </div>
+      <!-- Chat bubble -->
+      <div class="chat-bubble">
+        <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4V4c0-1.1-.9-2-2-2z"/></svg>
+      </div>
+    </div>
+
+    <!-- UPLOAD -->
+    <div class="screen" id="screen-upload">
+      <div class="upload-page">
+        <h2>Upload Your File</h2>
+        <p style="font-size:13.5px;color:rgba(0,0,0,0.5);margin-top:-18px;margin-bottom:20px;">Files must be in CSV format (.csv)</p>
+        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()"
+             ondragover="event.preventDefault(); this.classList.add('dragover')"
+             ondragleave="this.classList.remove('dragover')"
+             ondrop="handleDrop(event)">
+          <div class="info-badge">i</div>
+          <h3>Select File to Upload</h3>
+          <div class="subtitle">Or Drag and Drop Here</div>
+          <div class="upload-cloud" id="uploadCloudIcon">
+            <svg viewBox="0 0 110 90">
+              <path d="M85 45c0-16.5-13.5-30-30-30-13 0-24 8.3-28.2 20C14.5 36.5 5 47 5 59.5 5 73.6 16.4 85 30.5 85h52C95.6 85 106 74.6 106 61.5c0-12-9-22-20.8-23.5" fill="#b8ecf4" stroke="none"/>
+              <path d="M55 42v28M42 55l13-13 13 13" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="upload-spinner" id="uploadSpinner"></div>
+          <div class="max-size">Maximum file size is 1GB</div>
+        </div>
+        <input type="file" id="fileInput" accept=".csv" onchange="handleFileSelect(this)">
+        <div class="file-selected-display" id="fileSelectedDisplay">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="#00c4d4"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 2l5 5h-5V4zM6 20V4h6v6h6v10H6z"/></svg>
+          <div class="file-details">
+            <div class="name" id="selectedFileName"></div>
+            <div class="size" id="selectedFileSize"></div>
+          </div>
+          <div class="remove-file" onclick="removeFile()">&times;</div>
+        </div>
+        <div class="upload-links">
+          <a href="#" onclick="event.preventDefault();navigate('paste')">
+            <svg viewBox="0 0 14 14"><path d="M2 1h10v12H2V1z" fill="none" stroke="#00c4d4" stroke-width="1.2"/><line x1="4.5" y1="5" x2="9.5" y2="5" stroke="#00c4d4" stroke-width="0.8"/><line x1="4.5" y1="7" x2="9.5" y2="7" stroke="#00c4d4" stroke-width="0.8"/><line x1="4.5" y1="9" x2="7.5" y2="9" stroke="#00c4d4" stroke-width="0.8"/></svg>
+            Or copy and paste your list here
+          </a>
+          <a href="https://platform.fullcontact.com/match/Input_Fields_Template.csv?v=db61f5303ad4e239d0a6a56fb9eee6b4">
+            <svg viewBox="0 0 14 14"><path d="M7 2v8M3 7l4 4 4-4" fill="none" stroke="#00c4d4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><line x1="2" y1="12" x2="12" y2="12" stroke="#00c4d4" stroke-width="1.5" stroke-linecap="round"/></svg>
+            Download .CSV Template
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- PASTE -->
+    <div class="screen" id="screen-paste">
+      <div class="paste-page">
+        <h2>Upload Your File</h2>
+        <p style="font-size:13.5px;color:rgba(0,0,0,0.5);margin-bottom:12px;">One record per line, separated by commas <span class="dev-note">Confirm this is the correct expected format</span></p>
+        <div class="paste-container">
+          <textarea id="pasteArea" placeholder="e.g. jane.smith@gmail.com, 303-555-1234, Jane, Smith&#10;john.doe@company.com, 720-555-6789, John, Doe" oninput="toggleContinueBtn()"></textarea>
+          <div class="paste-footer">
+            <button class="btn-continue" id="continueBtn" onclick="handlePasteContinue()">Continue</button>
+          </div>
+        </div>
+        <div class="upload-links">
+          <a href="#" onclick="event.preventDefault();navigate('upload')">
+            <svg viewBox="0 0 14 14"><path d="M85 45c0-16.5-13.5-30-30-30-13 0-24 8.3-28.2 20C14.5 36.5 5 47 5 59.5 5 73.6 16.4 85 30.5 85h52C95.6 85 106 74.6 106 61.5c0-12-9-22-20.8-23.5" fill="#00c4d4" stroke="none" transform="scale(0.14)"/><path d="M7 3v5M4.5 5.5L7 3l2.5 2.5" fill="none" stroke="#00c4d4" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Or upload your file here
+          </a>
+          <a href="https://platform.fullcontact.com/match/Input_Fields_Template.csv?v=db61f5303ad4e239d0a6a56fb9eee6b4">
+            <svg viewBox="0 0 14 14"><path d="M7 2v8M3 7l4 4 4-4" fill="none" stroke="#00c4d4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><line x1="2" y1="12" x2="12" y2="12" stroke="#00c4d4" stroke-width="1.5" stroke-linecap="round"/></svg>
+            Download .CSV Template
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- REVIEW FILE DETAILS -->
+    <div class="screen" id="screen-review">
+      <div class="review-page">
+        <h2>Review File Details</h2>
+        <div class="file-info-bar">
+          <div class="file-name">File Name: <span id="reviewFileName">campaign_list.csv</span></div>
+          <div class="file-rows">Total Rows: <span id="reviewRowCount">10,245</span></div>
+        </div>
+        <div class="separator-section">
+          <h3>Select File Separator</h3>
+          <div class="radio-group">
+            <label class="radio-item">
+              <input type="radio" name="separator" value="auto" checked>
+              Detect Automatically <span class="rec-label">(Recommended)</span>
+            </label>
+            <label class="radio-item"><input type="radio" name="separator" value="tab"> Tab</label>
+            <label class="radio-item"><input type="radio" name="separator" value="comma"> Comma</label>
+            <label class="radio-item">
+              <input type="radio" name="separator" value="custom"> Custom
+              <input type="text" class="custom-input" maxlength="1" disabled>
+            </label>
+          </div>
+        </div>
+        <div class="header-section">
+          <h3>Add Header to my File</h3>
+          <div class="header-options">
+            <label class="radio-item"><input type="radio" name="header" value="yes" checked> Yes</label>
+            <label class="radio-item"><input type="radio" name="header" value="no"> No</label>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn-secondary" onclick="navigate('upload')">Cancel</button>
+          <button class="btn-primary" onclick="navigate('map')">Map Fields</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAP FIELDS -->
+    <div class="screen" id="screen-map">
+      <div class="map-page">
+        <h2>Map Your Fields</h2>
+        <table class="map-table">
+          <thead><tr><th>Your Fields</th><th>FullContact Field</th><th>Status</th></tr></thead>
+          <tbody id="mapTableBody"></tbody>
+        </table>
+        <div class="btn-row" style="margin-top:24px">
+          <button class="btn-secondary" onclick="navigate('review')">Back</button>
+          <button class="btn-primary" onclick="navigate('confirm')">Review & Confirm</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONFIRM -->
+    <div class="screen" id="screen-confirm">
+      <div class="confirm-page">
+        <h2>Review & Confirm Enrichment</h2>
+        <div class="confirm-card">
+          <h3>Mapped Fields:</h3>
+          <div class="mapped-list" id="mappedFieldsList">HEM Email, Phone, City, Address, Zip Code</div>
+          <div style="margin-top:8px;">
+            <a href="#" onclick="event.preventDefault();document.getElementById('outputFieldsModal').classList.add('active')" style="color:#00c4d4;font-size:13px;text-decoration:none;">View output fields for your account</a>
+            <span class="dev-note" style="margin-left:8px;">Output fields determined by bundles on customer's contract</span>
+          </div>
+          <div class="confirm-stats">
+            <div class="confirm-stat">
+              <span class="label">Records in file:</span>
+              <span class="value">10,000</span>
+            </div>
+            <div class="confirm-stat">
+              <span class="label">Available matches
+                <span class="match-info">
+                  <span class="match-icon">i</span>
+                  <span class="match-tooltip">A <strong>match</strong> is our unit of usage. When you request data from us and we have something to share, that counts as a match. If we don't return data for a record, you won't be charged for it.</span>
+                </span>
+              :</span>
+              <span class="value">8,200</span>
+            </div>
+            <div class="confirm-stat">
+              <span class="label">Estimated Matches Used
+                <span class="match-info">
+                  <span class="match-icon">i</span>
+                  <span class="match-tooltip">This is the estimated number of records we expect to find data for. It may differ from your total record count because not every record will return a match. You are only charged for records where we return data.</span>
+                </span>
+              :</span>
+              <span class="value">8,850</span>
+            </div>
+          </div>
+          <div class="confirm-estimate">
+            We expect to enrich approximately <strong>8,850</strong> of your <strong>10,000</strong> records. You have <strong>8,200 matches</strong> remaining, so you need <strong>650 more</strong> to process this file.
+          </div>
+        </div>
+        <div class="warning-banner">
+          Note:- File has more records than matches - Please reduce records or <a href="#" onclick="event.preventDefault();openUpgradeModal()">upgrade plan</a>
+        </div>
+        <div class="agree-row">
+          <input type="checkbox" id="agreeMatch" onchange="checkBothConsents()">
+          <label for="agreeMatch">I agree to use my available matches to enrich this file</label>
+        </div>
+        <div class="agree-row" style="margin-top:6px;">
+          <input type="checkbox" id="agreeData" onchange="checkBothConsents()">
+          <label for="agreeData">I acknowledge that my data will be processed by FullContact per the <a href="https://www.fullcontact.com/privacy/services-agreement/" target="_blank" style="color:#00c4d4;">services agreement</a> and I agree to delete data when required by the <a href="https://www.fullcontact.com/privacy/services-agreement/#7(c)" target="_blank" style="color:#00c4d4;">data deletion policy</a></label>
+        </div>
+        <div class="btn-row">
+          <button class="btn-secondary" onclick="navigate('map')">Cancel</button>
+          <button class="btn-primary" id="startEnrichBtn" onclick="startEnrichment()" disabled>Start Enrichment</button>
+          <span class="dev-note" style="margin-left:8px;vertical-align:middle;">Disable this button when estimated matches exceed available matches until user purchases more</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- REPORTS -->
+    <div class="screen" id="screen-reports">
+      <div class="reports-page">
+        <h2>All Reports</h2>
+        <div class="reports-toolbar">
+          <select class="filter-select">
+            <option>Select</option>
+            <option>All</option>
+            <option>Completed</option>
+            <option>Processing</option>
+            <option>Failed</option>
+          </select>
+          <div class="bulk-actions" id="bulkActions" style="display:none">
+            <button class="btn-download-all">Download All</button>
+            <button class="btn-delete-all">Delete All</button>
+          </div>
+        </div>
+        <table class="reports-table">
+          <thead>
+            <tr>
+              <th style="width:36px"><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)"></th>
+              <th>Name</th>
+              <th>Date Created</th>
+              <th>Status</th>
+              <th>Download</th>
+              <th style="width:36px"></th>
+            </tr>
+          </thead>
+          <tbody id="reportsTableBody"></tbody>
+        </table>
+        <div class="pagination">
+          <button class="pg-btn nav">&lsaquo;</button>
+          <button class="pg-btn active">1</button>
+          <button class="pg-btn">2</button>
+          <button class="pg-btn">3</button>
+          <button class="pg-btn">4</button>
+          <button class="pg-btn">5</button>
+          <button class="pg-btn nav">&rsaquo;</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DATA QUALITY SUMMARY -->
+    <div class="screen" id="screen-summary">
+      <div class="summary-page">
+        <h2>Data Quality Summary</h2>
+        <div class="file-ref">File Name:- <span id="summaryFileName">denverOfficeTest.csv</span> &nbsp;<a href="#" onclick="event.preventDefault();document.getElementById('outputFieldsModal').classList.add('active')" style="color:#00c4d4;font-size:13px;text-decoration:none;">View output fields</a></div>
+        <button class="lets-talk-btn" onclick="alert('Contact Sales feature')">
+          <svg viewBox="0 0 16 16"><path d="M14 1H2c-.6 0-1 .4-1 1v9c0 .6.4 1 1 1h3v3l4-3h5c.6 0 1-.4 1-1V2c0-.6-.4-1-1-1z"/></svg>
+          LET'S TALK
+        </button>
+
+        <div class="summary-section">
+          <h3>FINAL OUTCOME</h3>
+          <div class="outcome-grid">
+            <div class="outcome-card">
+              <div class="oc-label">DISTINCT RECORDS</div>
+              <div class="oc-value">847</div>
+            </div>
+            <div class="outcome-card">
+              <div class="oc-label">DUPLICATE RATE</div>
+              <div class="oc-value">12.3%</div>
+              <div class="oc-warning">&#x26A0; High duplication</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="summary-section">
+          <h3>DATA QUALITY & MATCHING</h3>
+          <div class="quality-grid">
+            <div class="quality-card">
+              <div class="qc-label">Match Rate</div>
+              <div class="qc-value">87.2%</div>
+              <div class="qc-badge">Good</div>
+            </div>
+            <div class="quality-card">
+              <div class="qc-label">Resolve Rate</div>
+              <div class="qc-value">91.5%</div>
+              <div class="qc-badge">Good</div>
+            </div>
+            <div class="quality-card">
+              <div class="qc-label">Enrichable Records</div>
+              <div class="qc-value">739/847</div>
+            </div>
+            <div class="quality-card">
+              <div class="qc-label">Resolvable Records</div>
+              <div class="qc-value">775/847</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="summary-section">
+          <h3>INPUT SUMMARY</h3>
+          <div class="input-grid">
+            <div class="quality-card">
+              <div class="qc-label">Input Records:</div>
+              <div class="qc-value">965</div>
+            </div>
+            <div class="quality-card">
+              <div class="qc-label">Sampled Records:</div>
+              <div class="qc-value">847</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="btn-row" style="margin-top:16px;justify-content:space-between;">
+          <button class="btn-secondary" onclick="navigate('reports')">Back to Reports</button>
+          <div style="display:flex;gap:12px;">
+            <button class="btn-primary" onclick="showDownloadNote(document.getElementById('summaryFileName').textContent)" style="background:#21ba45;">
+              <span style="display:inline-flex;align-items:center;gap:6px;">
+                <svg width="16" height="16" viewBox="0 0 18 18" fill="#fff"><path d="M9 3v9M5 9l4 4 4-4" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><line x1="3" y1="15" x2="15" y2="15" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>
+                Download Enriched File
+              </span>
+            </button>
+            <button class="btn-primary" onclick="navigate('upload')">New Enrichment</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Processing Modal -->
+<div class="modal-overlay" id="processingModal">
+  <div class="modal">
+    <div class="ios-spinner">
+      <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+      <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+      <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+      <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+    </div>
+    <h3>Enriching your records...</h3>
+    <p>You'll be notified when processing is complete.</p>
+  </div>
+</div>
+
+<!-- Input Fields Modal -->
+<div class="fields-modal-overlay" id="fieldsModal" onclick="if(event.target===this)this.classList.remove('active')">
+  <button class="fields-modal-close" onclick="document.getElementById('fieldsModal').classList.remove('active')">&times;</button>
+  <div class="fields-modal">
+    <h2>Input Fields</h2>
+    <div class="fields-modal-body">
+      <!-- Email Address -->
+      <div class="field-card">
+        <div class="field-card-icon">
+          <svg viewBox="0 0 36 36"><path d="M4 8h28v20H4V8zm0 0l14 11L32 8" fill="none" stroke="#00c4d4" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/></svg>
+        </div>
+        <div class="field-card-content">
+          <h4>Email Address</h4>
+          <p>The email address for any person.</p>
+          <div class="example">Example: jane.smith@gmail.com</div>
+        </div>
+      </div>
+      <!-- Phone Number -->
+      <div class="field-card">
+        <div class="field-card-icon">
+          <svg viewBox="0 0 36 36"><path d="M10 6c1-2 4-2 5 0l2 4c.5 1 0 3-1 3.5l-1.5 1c-.5.3-.5 1 0 1.8l2.5 3.5c1 1.3 2 1.8 2.5 1.5l1.5-1c1-.5 2.5-.2 3 .8l2 4c.8 2-.5 4-2.5 4C15 29 5 20 6 11c0-2 2.5-3 4-5z" fill="none" stroke="#00c4d4" stroke-width="2.2"/></svg>
+        </div>
+        <div class="field-card-content">
+          <h4>Phone Number</h4>
+          <p>The phone number for any person.</p>
+          <div class="example">Example: +1-303-555-5555</div>
+        </div>
+      </div>
+      <!-- Social Profile URL -->
+      <div class="field-card">
+        <div class="field-card-icon">
+          <svg viewBox="0 0 36 36"><circle cx="12" cy="18" r="3.5" fill="none" stroke="#00c4d4" stroke-width="2.2"/><circle cx="26" cy="9" r="3.5" fill="none" stroke="#00c4d4" stroke-width="2.2"/><circle cx="26" cy="27" r="3.5" fill="none" stroke="#00c4d4" stroke-width="2.2"/><line x1="15" y1="16.5" x2="23" y2="10.5" stroke="#00c4d4" stroke-width="2.2"/><line x1="15" y1="19.5" x2="23" y2="25.5" stroke="#00c4d4" stroke-width="2.2"/></svg>
+        </div>
+        <div class="field-card-content">
+          <h4>Social Profile URL</h4>
+          <p>URLs, IDs, and usernames for social profiles.</p>
+          <div class="example">Example: linkedin.com/in/jane-smith</div>
+        </div>
+      </div>
+      <!-- Name & Address -->
+      <div class="field-card">
+        <div class="field-card-icon">
+          <svg viewBox="0 0 36 36"><circle cx="18" cy="12" r="5" fill="none" stroke="#00c4d4" stroke-width="2.2"/><path d="M8 30c0-5.5 4.5-10 10-10s10 4.5 10 10" fill="none" stroke="#00c4d4" stroke-width="2.2"/></svg>
+        </div>
+        <div class="field-card-content">
+          <h4>Name & Address</h4>
+          <p>The first and last name for any person combined with their street address, city, state and/or country.</p>
+          <div class="example">Example: Jane Smith, 1234 Main Street Denver, Colorado</div>
+        </div>
+      </div>
+      <!-- MAID -->
+      <div class="field-card">
+        <div class="field-card-icon">
+          <svg viewBox="0 0 36 36"><rect x="8" y="6" width="20" height="24" rx="3" fill="none" stroke="#00c4d4" stroke-width="2.2"/><circle cx="14" cy="15" r="1.5" fill="#00c4d4"/><circle cx="22" cy="15" r="1.5" fill="#00c4d4"/><line x1="14" y1="21" x2="14" y2="25" stroke="#00c4d4" stroke-width="2"/><line x1="22" y1="21" x2="22" y2="25" stroke="#00c4d4" stroke-width="2"/><line x1="14" y1="21" x2="22" y2="21" stroke="#00c4d4" stroke-width="2"/></svg>
+        </div>
+        <div class="field-card-content">
+          <h4>Mobile Advertising ID (MAID)</h4>
+          <p>Connect the offline and online worlds and improve targeted advertising by appending Mobile Advertising IDs to your current contact information.</p>
+          <div class="example">Example: 4LIHAH9T-BY0W-UF42-OGWM-FI29NEYAFW7TH</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Output Fields Modal -->
+<div class="fields-modal-overlay" id="outputFieldsModal" onclick="if(event.target===this)this.classList.remove('active')">
+  <button class="fields-modal-close" onclick="document.getElementById('outputFieldsModal').classList.remove('active')">&times;</button>
+  <div class="output-modal">
+    <h2>Enrichment Output Fields</h2>
+    <div class="dev-note output-dev-note" style="display:block;line-height:1.5;">Output fields are determined by the insight bundles on the customer's contract. This demo shows Core Segmentation + Interest bundles. In production, dynamically populate this based on the account's active bundles.</div>
+    <div class="output-modal-body">
+      <div class="bundle-section">
+        <div class="bundle-header">
+          <svg viewBox="0 0 18 18"><circle cx="9" cy="6" r="3.5" fill="none" stroke="#00c4d4" stroke-width="1.5"/><path d="M2.5 16c0-3.6 2.9-6.5 6.5-6.5s6.5 2.9 6.5 6.5" fill="none" stroke="#00c4d4" stroke-width="1.5"/></svg>
+          Core Segmentation Bundle
+        </div>
+        <div class="bundle-fields">
+          <span class="bundle-field">Full Name</span>
+          <span class="bundle-field">Age Range</span>
+          <span class="bundle-field">Gender</span>
+          <span class="bundle-field">Birthday</span>
+          <span class="bundle-field">Location (City, State, Zip)</span>
+          <span class="bundle-field">Job Title</span>
+          <span class="bundle-field">Organization</span>
+          <span class="bundle-field">Twitter Profile</span>
+          <span class="bundle-field">LinkedIn Profile</span>
+          <span class="bundle-field">Bio</span>
+          <span class="bundle-field">Avatar</span>
+          <span class="bundle-field">Website</span>
+          <span class="bundle-field">Marital Status</span>
+          <span class="bundle-field">Language</span>
+          <span class="bundle-field">Dwelling Type</span>
+          <span class="bundle-field">Home Ownership</span>
+          <span class="bundle-field">Household Income</span>
+          <span class="bundle-field">Net Worth Range</span>
+          <span class="bundle-field">Presence of Children</span>
+          <span class="bundle-field">Number of Children</span>
+        </div>
+      </div>
+      <div class="bundle-section">
+        <div class="bundle-header">
+          <svg viewBox="0 0 18 18"><path d="M9 2l2 4 4.5.7-3.2 3.1.8 4.5L9 12.2 4.9 14.3l.8-4.5L2.5 6.7 7 6z" fill="none" stroke="#00c4d4" stroke-width="1.5" stroke-linejoin="round"/></svg>
+          Interest Bundle
+        </div>
+        <div class="bundle-category">
+          <div class="bundle-category-name">Technology</div>
+          <div class="bundle-fields">
+            <span class="bundle-field">Brand Affinities</span>
+            <span class="bundle-field">Device Preferences</span>
+            <span class="bundle-field">Software Interests</span>
+          </div>
+        </div>
+        <div class="bundle-category">
+          <div class="bundle-category-name">Entertainment</div>
+          <div class="bundle-fields">
+            <span class="bundle-field">Genre Preferences</span>
+            <span class="bundle-field">Movie Interests</span>
+            <span class="bundle-field">Music Interests</span>
+          </div>
+        </div>
+        <div class="bundle-category">
+          <div class="bundle-category-name">Gaming</div>
+          <div class="bundle-fields">
+            <span class="bundle-field">Platform/Console</span>
+            <span class="bundle-field">Franchise Interests</span>
+          </div>
+        </div>
+        <div class="bundle-category">
+          <div class="bundle-category-name">Lifestyle</div>
+          <div class="bundle-fields">
+            <span class="bundle-field">Travel Enthusiasm</span>
+            <span class="bundle-field">Pet Ownership</span>
+            <span class="bundle-field">Fitness & Wellness</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Download Dev Note Modal -->
+<div class="modal-overlay" id="downloadNoteModal" onclick="if(event.target===this)this.classList.remove('active')">
+  <div class="delete-modal">
+    <div class="dev-note" style="display:block;margin-bottom:16px;text-align:left;padding:12px 14px;font-size:12px;line-height:1.5;">This download icon will download the enriched file for "<span id="downloadNoteFile"></span>" as a CSV. In production, clicking this triggers a direct file download of the enriched output with all original columns plus appended FullContact fields.</div>
+    <p style="font-size:14px;color:rgba(0,0,0,0.6);margin-bottom:20px;">Downloading <strong><span id="downloadNoteFile2"></span></strong></p>
+    <div class="modal-btns">
+      <button class="btn-secondary" onclick="document.getElementById('downloadNoteModal').classList.remove('active')">Close</button>
+      <button class="btn-primary" onclick="document.getElementById('downloadNoteModal').classList.remove('active');navigate('summary');document.getElementById('summaryFileName').textContent=document.getElementById('downloadNoteFile').textContent">View Summary</button>
+    </div>
+  </div>
+</div>
+
+<!-- Upgrade Plan Modal -->
+<div class="modal-overlay" id="upgradeModal">
+  <div class="upgrade-modal">
+    <div class="upgrade-modal-header">
+      <h2>Add Matches to Your Plan</h2>
+      <p>Purchase additional matches at your account's rate</p>
+    </div>
+    <div class="upgrade-modal-body">
+      <div class="upgrade-current">
+        <span class="uc-label">Current Plan</span>
+        <span class="uc-value">Professional</span>
+      </div>
+      <div class="upgrade-current">
+        <span class="uc-label">Your CPM Rate <span class="dev-note">Pull from total CPM on bundles on contract</span></span>
+        <span class="uc-value highlight" id="upgradeCpm">$40.00</span>
+      </div>
+      <div class="upgrade-current">
+        <span class="uc-label">Available Matches</span>
+        <span class="uc-value">8,200</span>
+      </div>
+      <div class="upgrade-current">
+        <span class="uc-label">Matches Needed</span>
+        <span class="uc-value" style="color:#d44">650 additional</span>
+      </div>
+      <div class="upgrade-add">
+        <div class="upgrade-add-label">Add Matches (in increments of 1,000)</div>
+        <div class="upgrade-stepper">
+          <button onclick="adjustMatches(-1)" id="matchMinus">&#x2212;</button>
+          <div class="stepper-value" id="matchCount">1,000</div>
+          <button onclick="adjustMatches(1)" id="matchPlus">+</button>
+        </div>
+        <div class="upgrade-summary">
+          <div class="upgrade-summary-row">
+            <span>Additional matches</span>
+            <span class="usr-value" id="summaryMatches">1,000</span>
+          </div>
+          <div class="upgrade-summary-row">
+            <span>Rate (CPM) <span class="dev-note">Pull from total CPM on bundles on contract</span></span>
+            <span class="usr-value" id="summaryRate">$40.00</span>
+          </div>
+          <div class="upgrade-summary-row total">
+            <span>Total Cost</span>
+            <span class="usr-value" id="summaryTotal">$40.00</span>
+          </div>
+          <div style="text-align:center;padding-top:10px;font-size:12.5px;color:rgba(0,0,0,0.5);">
+            <a href="mailto:sales@fullcontact.com?cc=manjushri.rathi@moz.com&subject=File%20Enrichment%20-%20Additional%20Match%20Options&body=Hi%2C%0A%0AI%E2%80%99d%20like%20to%20discuss%20options%20for%20additional%20matches%20on%20my%20account.%0A%0AThank%20you" style="color:#00c4d4;text-decoration:none;font-size:12.5px;">Connect with your account team for other options</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="upgrade-modal-footer">
+      <button class="btn-secondary" onclick="closeUpgradeModal()">Cancel</button>
+      <button class="btn-primary" onclick="confirmUpgrade()">Purchase Matches</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="delete-modal">
+    <p>Are you sure you want to delete<br>'<span id="deleteFileName">denverOfficeTest.csv</span>'? <span class="info-sm">i</span></p>
+    <div class="modal-btns">
+      <button class="btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+      <button class="btn-primary" onclick="confirmDelete()">Yes</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== State =====
+let currentScreen = 'landing';
+let uploadedFile = null;
+let deleteTargetRow = null;
+
+const sampleFields = [
+  { name: 'email_hash', fc: 'SHA - 256 Email', status: 'Mapped' },
+  { name: 'phone_number', fc: 'Phone Number', status: 'Mapped' },
+  { name: 'first_name', fc: 'First Name', status: 'Mapped' },
+  { name: 'last_name', fc: 'Last Name', status: 'Mapped' },
+  { name: 'company_name', fc: 'Company Name', status: 'Mapped' },
+  { name: 'state', fc: 'State', status: 'Mapped' },
+  { name: 'postal_code', fc: 'Zip Code', status: 'Mapped' },
+  { name: 'birth_date', fc: '', status: 'Not Mapped' },
+  { name: 'gender', fc: '', status: 'Not Mapped' },
+  { name: 'facebook_id', fc: 'Ignore This Column', status: 'Ignored' },
+  { name: 'twitter_handle', fc: 'X Id', status: 'Mapped' },
+];
+
+const fcFieldOptions = [
+  'Select Field', 'SHA - 256 Email', 'MD5 Email', 'Phone Number', 'First Name', 'Last Name',
+  'Company Name', 'Zip Code', 'City', 'State', 'Address', 'Email', 'HEM Email',
+  'X Id', 'LinkedIn URL', 'MAID', 'Ignore This Column'
+];
+
+const fcFieldTooltips = {
+  'Select Field': '',
+  'Email': 'Plain text email address (e.g. jane@example.com)',
+  'SHA - 256 Email': 'Email address pre-hashed with SHA-256 algorithm (advanced)',
+  'MD5 Email': 'Email address pre-hashed with MD5 algorithm (advanced)',
+  'HEM Email': 'Hashed Email — email pre-hashed using any standard method (advanced)',
+  'Phone Number': 'Phone number in any format (e.g. +1-303-555-5555)',
+  'First Name': 'Person\'s first/given name',
+  'Last Name': 'Person\'s last/family name',
+  'Company Name': 'Company or organization name',
+  'Zip Code': 'Postal/ZIP code',
+  'City': 'City name',
+  'State': 'State or province',
+  'Address': 'Street address',
+  'X Id': 'X (Twitter) username or ID',
+  'LinkedIn URL': 'LinkedIn profile URL',
+  'MAID': 'Mobile Advertising ID (e.g. from iOS or Android devices)',
+  'Ignore This Column': 'Skip this column — do not use for enrichment'
+};
+
+const sampleReports = [
+  { name: 'denverOfficeTest.csv', date: '01/01/2026', status: 'processing', progress: 65 },
+  { name: 'NewTest.csv', date: '01/01/2026', status: 'processing', progress: 35 },
+  { name: 'SampleTest.csv', date: '01/01/2026', status: 'queued', progress: 0 },
+  { name: 'OfficeTest.csv', date: '01/01/2026', status: 'completed', progress: 100 },
+  { name: 'OldTest.csv', date: '01/01/2026', status: 'completed', progress: 100 },
+  { name: 'denverOfficeTest01.csv', date: '01/01/2026', status: 'failed', progress: 0 },
+  { name: 'Clinet02.csv', date: '01/01/2026', status: 'completed', progress: 100 },
+  { name: 'Client01.csv', date: '01/01/2026', status: 'completed', progress: 100 },
+  { name: 'denverOfficeTest00.csv', date: '01/01/2026', status: 'failed', progress: 0 },
+];
+
+// SVG icons for actions
+const downloadSvg = '<svg viewBox="0 0 18 18"><path d="M9 3v9M5 9l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><line x1="3" y1="15" x2="15" y2="15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+const trashSvg = '<svg viewBox="0 0 18 18"><path d="M3 5h12M7 5V3h4v2M5 5v10h8V5" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><line x1="7.5" y1="8" x2="7.5" y2="12" stroke="currentColor" stroke-width="1.2"/><line x1="10.5" y1="8" x2="10.5" y2="12" stroke="currentColor" stroke-width="1.2"/></svg>';
+
+// ===== Navigation =====
+function navigate(screen) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById('screen-' + screen);
+  if (el) { el.classList.add('active'); currentScreen = screen; }
+
+  // Update topbar text
+  const topLeft = document.getElementById('topbarLeft');
+  if (screen === 'landing') {
+    topLeft.textContent = 'File Enrichment';
+  } else {
+    topLeft.textContent = '';
+  }
+
+  // Sidebar highlights
+  document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+  document.getElementById('nav-enrich').classList.add('active');
+  if (screen === 'reports') {
+    document.getElementById('nav-reports').classList.add('active');
+  }
+
+  // Update mapped fields when entering confirm
+  if (screen === 'confirm') updateMappedFieldsList();
+}
+
+// ===== File Upload =====
+function handleFileSelect(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (!file.name.endsWith('.csv')) { alert('Please upload a CSV file only.'); return; }
+  if (file.size > 1024 * 1024 * 1024) { alert('File size exceeds 1GB limit.'); return; }
+  uploadedFile = file;
+  showUploadLoading();
+}
+
+function handleDrop(event) {
+  event.preventDefault();
+  event.currentTarget.classList.remove('dragover');
+  const file = event.dataTransfer.files[0];
+  if (!file) return;
+  if (!file.name.endsWith('.csv')) { alert('Please upload a CSV file only.'); return; }
+  uploadedFile = file;
+  showUploadLoading();
+}
+
+function showUploadLoading() {
+  const zone = document.getElementById('uploadZone');
+  const spinner = document.getElementById('uploadSpinner');
+  const cloud = document.getElementById('uploadCloudIcon');
+  cloud.style.display = 'none';
+  spinner.style.display = 'block';
+  zone.querySelector('h3').textContent = 'Uploading...';
+  zone.querySelector('.subtitle').textContent = '';
+
+  setTimeout(() => {
+    spinner.style.display = 'none';
+    cloud.style.display = 'block';
+    zone.querySelector('h3').textContent = 'Select File to Upload';
+    zone.querySelector('.subtitle').textContent = 'Or Drag and Drop Here';
+    document.getElementById('selectedFileName').textContent = uploadedFile.name;
+    document.getElementById('selectedFileSize').textContent = formatFileSize(uploadedFile.size);
+    document.getElementById('fileSelectedDisplay').classList.add('active');
+    document.getElementById('reviewFileName').textContent = uploadedFile.name;
+    const rows = Math.floor(Math.random() * 15000) + 1000;
+    document.getElementById('reviewRowCount').textContent = rows.toLocaleString();
+    setTimeout(() => navigate('review'), 400);
+  }, 1500);
+}
+
+function removeFile() {
+  uploadedFile = null;
+  document.getElementById('fileSelectedDisplay').classList.remove('active');
+  document.getElementById('fileInput').value = '';
+}
+
+// ===== Paste Screen =====
+function toggleContinueBtn() {
+  const btn = document.getElementById('continueBtn');
+  const text = document.getElementById('pasteArea').value.trim();
+  if (text.length > 0) { btn.classList.add('active'); } else { btn.classList.remove('active'); }
+}
+
+function handlePasteContinue() {
+  const text = document.getElementById('pasteArea').value.trim();
+  if (!text) return;
+  const lines = text.split('\n').filter(l => l.trim());
+  uploadedFile = { name: 'pasted_list.csv', size: text.length };
+  document.getElementById('reviewFileName').textContent = 'pasted_list.csv';
+  document.getElementById('reviewRowCount').textContent = lines.length.toLocaleString();
+  navigate('review');
+}
+
+function formatFileSize(bytes) {
+  if (bytes < 1024) return bytes + ' bytes';
+  if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/(1024*1024)).toFixed(1) + ' MB';
+}
+
+// ===== Map Fields =====
+function renderMapTable() {
+  const tbody = document.getElementById('mapTableBody');
+  tbody.innerHTML = '';
+  sampleFields.forEach((field, i) => {
+    const tr = document.createElement('tr');
+    const cls = field.status === 'Mapped' ? 'status-mapped' : field.status === 'Ignored' ? 'status-ignored' : 'status-not-mapped';
+    const selVal = field.fc || 'Select Field';
+    let opts = fcFieldOptions.map(o => {
+      const tip = fcFieldTooltips[o] || '';
+      return `<option value="${o}" ${o===selVal?'selected':''} title="${tip}">${o}</option>`;
+    }).join('');
+    const tooltip = fcFieldTooltips[selVal] || '';
+    const tipHtml = tooltip ? `<div class="field-tip">${tooltip}</div>` : '';
+    tr.innerHTML = `<td>${field.name}</td><td><select onchange="updateFieldStatus(${i},this.value)" title="${tooltip}">${opts}</select>${tipHtml}</td><td class="${cls}">${field.status}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function updateFieldStatus(i, val) {
+  if (val === 'Select Field') { sampleFields[i].fc = ''; sampleFields[i].status = 'Not Mapped'; }
+  else if (val === 'Ignore This Column') { sampleFields[i].fc = val; sampleFields[i].status = 'Ignored'; }
+  else { sampleFields[i].fc = val; sampleFields[i].status = 'Mapped'; }
+  renderMapTable();
+}
+
+function updateMappedFieldsList() {
+  const mapped = sampleFields.filter(f => f.status === 'Mapped' && f.fc && f.fc !== 'Select Field').map(f => f.fc);
+  document.getElementById('mappedFieldsList').textContent = mapped.join(', ') || 'None';
+}
+
+// ===== Upgrade Modal =====
+let matchIncrement = 1;
+const cpmRate = 40.00;
+
+function openUpgradeModal() {
+  matchIncrement = 1;
+  updateUpgradeUI();
+  document.getElementById('upgradeModal').classList.add('active');
+}
+
+function closeUpgradeModal() {
+  document.getElementById('upgradeModal').classList.remove('active');
+}
+
+function adjustMatches(delta) {
+  matchIncrement = Math.max(1, matchIncrement + delta);
+  updateUpgradeUI();
+}
+
+function updateUpgradeUI() {
+  const count = matchIncrement * 1000;
+  const cost = (count / 1000) * cpmRate;
+  document.getElementById('matchCount').textContent = count.toLocaleString();
+  document.getElementById('matchMinus').disabled = matchIncrement <= 1;
+  document.getElementById('summaryMatches').textContent = count.toLocaleString();
+  document.getElementById('summaryRate').textContent = '$' + cpmRate.toFixed(2);
+  document.getElementById('summaryTotal').textContent = '$' + cost.toFixed(2);
+}
+
+function confirmUpgrade() {
+  const count = matchIncrement * 1000;
+  closeUpgradeModal();
+  // Update the available matches on confirm screen
+  const newAvailable = 8200 + count;
+  document.querySelectorAll('.confirm-stat .value')[1].textContent = newAvailable.toLocaleString();
+  // Hide warning if enough matches now
+  if (newAvailable >= 8850) {
+    document.querySelector('.warning-banner').style.display = 'none';
+  }
+}
+
+// ===== Confirm =====
+function checkBothConsents() {
+  const match = document.getElementById('agreeMatch').checked;
+  const data = document.getElementById('agreeData').checked;
+  document.getElementById('startEnrichBtn').disabled = !(match && data);
+}
+
+function startEnrichment() {
+  if (!document.getElementById('agreeMatch').checked || !document.getElementById('agreeData').checked) return;
+  document.getElementById('processingModal').classList.add('active');
+  setTimeout(() => {
+    document.getElementById('processingModal').classList.remove('active');
+    sampleReports.unshift({
+      name: uploadedFile ? uploadedFile.name : 'campaign_list.csv',
+      date: new Date().toLocaleDateString('en-US', {month:'2-digit',day:'2-digit',year:'numeric'}),
+      status: 'processing', progress: 10
+    });
+    renderReports();
+    navigate('reports');
+  }, 3000);
+}
+
+// ===== Reports =====
+function renderReports() {
+  const tbody = document.getElementById('reportsTableBody');
+  tbody.innerHTML = '';
+  sampleReports.forEach((r, i) => {
+    const tr = document.createElement('tr');
+    let statusHtml = '', dlHtml = '';
+    if (r.status === 'processing') {
+      statusHtml = `<div class="status-cell"><span class="status-text st-processing">In Process..</span><div class="progress-bar"><div class="fill fill-cyan" style="width:${r.progress}%"></div></div></div>`;
+      dlHtml = `<button class="action-icon disabled">${downloadSvg}</button>`;
+    } else if (r.status === 'queued') {
+      statusHtml = `<div class="status-cell"><span class="status-text st-queued">Queued</span></div>`;
+      dlHtml = `<button class="action-icon disabled">${downloadSvg}</button>`;
+    } else if (r.status === 'completed') {
+      statusHtml = `<div class="status-cell"><span class="status-text st-completed">Completed</span><div class="progress-bar"><div class="fill fill-green" style="width:100%"></div></div></div>`;
+      dlHtml = `<button class="action-icon" onclick="showDownloadNote('${r.name}')">${downloadSvg}</button>`;
+    } else if (r.status === 'failed') {
+      statusHtml = `<div class="status-cell"><span class="status-text st-failed">Failed &#x26A0;</span></div>`;
+      dlHtml = '';
+    }
+    tr.innerHTML = `
+      <td><input type="checkbox" class="report-check" onchange="checkBulkActions()"></td>
+      <td style="cursor:pointer" onclick="if('${r.status}'==='completed'){navigate('summary');document.getElementById('summaryFileName').textContent='${r.name}'}">${r.name}</td>
+      <td>${r.date}</td>
+      <td>${statusHtml}</td>
+      <td>${dlHtml}</td>
+      <td><button class="action-icon" onclick="showDeleteModal('${r.name}',${i})">${trashSvg}</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function toggleSelectAll(cb) {
+  document.querySelectorAll('.report-check').forEach(c => c.checked = cb.checked);
+  checkBulkActions();
+}
+
+function checkBulkActions() {
+  const n = document.querySelectorAll('.report-check:checked').length;
+  document.getElementById('bulkActions').style.display = n > 0 ? 'flex' : 'none';
+}
+
+// ===== Download Note Modal =====
+function showDownloadNote(filename) {
+  document.getElementById('downloadNoteFile').textContent = filename;
+  document.getElementById('downloadNoteFile2').textContent = filename;
+  document.getElementById('downloadNoteModal').classList.add('active');
+}
+
+// ===== Delete Modal =====
+function showDeleteModal(name, index) {
+  document.getElementById('deleteFileName').textContent = name;
+  deleteTargetRow = index;
+  document.getElementById('deleteModal').classList.add('active');
+}
+function closeDeleteModal() {
+  document.getElementById('deleteModal').classList.remove('active');
+  deleteTargetRow = null;
+}
+function confirmDelete() {
+  if (deleteTargetRow !== null) { sampleReports.splice(deleteTargetRow, 1); renderReports(); }
+  closeDeleteModal();
+}
+
+// ===== Custom separator toggle =====
+document.querySelectorAll('input[name="separator"]').forEach(r => {
+  r.addEventListener('change', function() {
+    const ci = document.querySelector('.custom-input');
+    ci.disabled = this.value !== 'custom';
+    if (this.value === 'custom') ci.focus();
+  });
+});
+
+// ===== Init =====
+renderMapTable();
+renderReports();
+// Set initial topbar
+document.getElementById('topbarLeft').textContent = 'File Enrichment';
+
+// Simulate processing progress
+setInterval(() => {
+  let changed = false;
+  sampleReports.forEach(r => {
+    if (r.status === 'processing' && r.progress < 100) {
+      r.progress += Math.random() * 3;
+      if (r.progress >= 100) { r.progress = 100; r.status = 'completed'; }
+      changed = true;
+    }
+  });
+  if (changed && currentScreen === 'reports') renderReports();
+}, 2000);
+</script>
+</body>
+</html>
