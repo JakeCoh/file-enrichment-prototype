@@ -70,7 +70,7 @@ Bundle-based organization (Core Segmentation + Interest) with contract-dependent
 | Enforce match budget cap (disable Start Enrichment when insufficient) | Prevents accidental overspend; currently only a dev note | All 6 |
 | Remove DEV notes from UI | Visible dev annotations signal unfinished product | Doug, Rachel, Priya |
 | Email/webhook notification on job completion | "You'll be notified" is promised but no mechanism exists | Marcus, Tom |
-| Failed job error details | "Failed" with no explanation is a dead end | Sarah, Marcus, Tom |
+| ~~Failed job error details~~ | ~~"Failed" with no explanation is a dead end~~ | ~~Sarah, Marcus, Tom~~ **RESOLVED** - Failed jobs now show a hover tooltip with the specific failure reason (e.g., malformed rows, insufficient matches) |
 
 ### P1 - High Priority
 | Item | Rationale | Personas |
