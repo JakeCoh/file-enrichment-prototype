@@ -2412,7 +2412,7 @@ function renderReports() {
     }
     tr.innerHTML = `
       <td><input type="checkbox" class="report-check" onchange="checkBulkActions()"></td>
-      <td style="cursor:pointer" onclick="if('${r.status}'==='completed'){navigate('summary');document.getElementById('summaryFileName').textContent='${r.name}'}">${r.name}</td>
+      <td style="cursor:pointer" onclick="if('${r.status}'==='completed'){navigate('summary');document.getElementById('summaryFileName').textContent='${r.name}'}else if('${r.status}'==='processing'||'${r.status}'==='queued'){alert('This report is not ready yet. Please check back when processing is complete.')}">${r.name}</td>
       <td>${r.date}</td>
       <td>${statusHtml}</td>
       <td>${dlHtml}</td>
