@@ -780,6 +780,11 @@
       <div class="si-icon"><svg viewBox="0 0 16 16"><line x1="8" y1="1" x2="8" y2="15" stroke="currentColor" stroke-width="1.2"/><line x1="2" y1="4.5" x2="14" y2="11.5" stroke="currentColor" stroke-width="1.2"/><line x1="2" y1="11.5" x2="14" y2="4.5" stroke="currentColor" stroke-width="1.2"/><line x1="6" y1="1.5" x2="8" y2="3" stroke="currentColor" stroke-width="1"/><line x1="10" y1="1.5" x2="8" y2="3" stroke="currentColor" stroke-width="1"/><line x1="6" y1="14.5" x2="8" y2="13" stroke="currentColor" stroke-width="1"/><line x1="10" y1="14.5" x2="8" y2="13" stroke="currentColor" stroke-width="1"/></svg></div>
       <span>Snowflake</span>
     </div>
+    <!-- Demo -->
+    <div class="sidebar-item" id="nav-demo" onclick="navigate('demo')">
+      <div class="si-icon"><svg viewBox="0 0 16 16"><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zM5 6h6M5 8h6M5 10h4" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></div>
+      <span>Demo</span>
+    </div>
   </div>
   <div class="sidebar-section">
     <div class="sidebar-section-title">My Account</div>
@@ -871,7 +876,8 @@
     <div class="screen" id="screen-upload">
       <div class="upload-page">
         <h2>Upload Your File</h2>
-        <p style="font-size:13.5px;color:rgba(0,0,0,0.5);margin-top:-18px;margin-bottom:20px;">Files must be in CSV format (.csv)</p>
+        <p style="font-size:13.5px;color:rgba(0,0,0,0.5);margin-top:-18px;margin-bottom:4px;">Files must be in CSV format (.csv)</p>
+        <p style="font-size:13.5px;color:rgba(0,0,0,0.5);margin-top:0;margin-bottom:20px;">Files limited to less than 100K rows</p>
         <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()"
              ondragover="event.preventDefault(); this.classList.add('dragover')"
              ondragleave="this.classList.remove('dragover')"
@@ -887,6 +893,7 @@
           </div>
           <div class="upload-spinner" id="uploadSpinner"></div>
           <div class="max-size">Maximum file size is 1GB</div>
+          <div class="max-size">Maximum 100K Rows</div>
         </div>
         <input type="file" id="fileInput" accept=".csv" onchange="handleFileSelect(this)">
         <div class="file-selected-display" id="fileSelectedDisplay">
@@ -1159,6 +1166,682 @@
               </span>
             </button>
             <button class="btn-primary" onclick="navigate('upload')">New Enrichment</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== DEMO: Contact Book ===== -->
+    <div class="screen" id="screen-demo">
+      <style>
+        .demo-wrap { padding: 28px; }
+        .demo-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .demo-header h2 { font-size: 22px; font-weight: 700; color: #1b2534; }
+        .demo-toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .demo-toolbar input[type="text"] { padding: 7px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; width: 160px; }
+        .demo-toolbar select { padding: 7px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; background: #fff; }
+        .demo-btn { padding: 7px 14px; border: none; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; }
+        .demo-btn-primary { background: #00c4d4; color: #fff; }
+        .demo-btn-primary:hover { background: #00b0be; }
+        .demo-btn-warn { background: #e8e8e8; color: #b0b0b0; font-size: 11px; cursor: not-allowed; }
+        .demo-btn-danger { background: #fff; color: #cc3333; border: 1px solid #cc3333; font-size: 11px; }
+        .demo-btn-mystery { background: linear-gradient(90deg, #7b2ff7, #00c4d4); color: #fff; font-size: 11px; letter-spacing: 0.5px; }
+        .demo-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .demo-table th, .demo-table td { padding: 10px 14px; text-align: left; font-size: 13px; border-bottom: 1px solid #eee; }
+        .demo-table th { background: #f7f8fa; font-weight: 600; color: #555; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; user-select: none; cursor: pointer; }
+        .demo-table th:hover { color: #222; }
+        .demo-table tr:hover td { background: #f9fbff; }
+        .demo-table .avatar { width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; margin-right: 8px; vertical-align: middle; }
+        .demo-table .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+        .demo-table .actions-cell { display: flex; gap: 4px; }
+        .demo-table .actions-cell button { background: none; border: 1px solid #ddd; border-radius: 3px; padding: 3px 7px; cursor: pointer; font-size: 11px; color: #666; }
+        .demo-table .actions-cell button:hover { background: #f0f0f0; }
+        .demo-table .cb { width: 16px; height: 16px; accent-color: #00c4d4; }
+        .demo-tag { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+        .demo-tag-vip { background: #fff3cd; color: #856404; }
+        .demo-tag-new { background: #d4edda; color: #155724; }
+        .demo-tag-flag { background: #f8d7da; color: #721c24; }
+        .demo-tag-none { background: #e9ecef; color: #999; }
+        .demo-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; font-size: 12px; color: #888; }
+        .demo-footer select { margin: 0 4px; }
+        .demo-pagination { display: flex; gap: 4px; }
+        .demo-pagination button { background: #fff; border: 1px solid #ddd; border-radius: 3px; padding: 4px 10px; font-size: 12px; cursor: pointer; }
+        .demo-pagination button.active { background: #00c4d4; color: #fff; border-color: #00c4d4; }
+        .demo-confuse-banner { background: linear-gradient(90deg, #fffbe6, #fff3cd); border: 1px solid #ffe58f; border-radius: 6px; padding: 10px 16px; margin-bottom: 16px; font-size: 12px; color: #8a6d3b; display: flex; justify-content: space-between; align-items: center; }
+        .demo-confuse-banner .close-x { cursor: pointer; font-weight: bold; color: #8a6d3b; font-size: 16px; }
+        .demo-toggle-row { display: flex; gap: 16px; align-items: center; margin-bottom: 14px; font-size: 12px; color: #666; }
+        .demo-toggle-row label { display: flex; align-items: center; gap: 5px; cursor: pointer; }
+        .demo-toggle-row .toggle-switch { position: relative; width: 34px; height: 18px; background: #ccc; border-radius: 9px; display: inline-block; transition: background 0.2s; }
+        .demo-toggle-row .toggle-switch.on { background: #00c4d4; }
+        .demo-toggle-row .toggle-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; background: #fff; border-radius: 50%; transition: left 0.2s; }
+        .demo-toggle-row .toggle-switch.on::after { left: 18px; }
+        .demo-tooltip { position: relative; display: inline-block; cursor: help; border-bottom: 1px dotted #999; }
+        .demo-tooltip .tt-text { visibility: hidden; background: #333; color: #fff; padding: 6px 10px; border-radius: 4px; font-size: 11px; position: absolute; bottom: 125%; left: 50%; transform: translateX(-50%); white-space: nowrap; z-index: 10; }
+        .demo-tooltip:hover .tt-text { visibility: visible; }
+      </style>
+
+      <div class="demo-wrap">
+        <div class="demo-confuse-banner">
+          <span>&#9888; Action required: 3 contacts have <span class="demo-tooltip">unresolved sync conflicts<span class="tt-text">Entity merge pending upstream reconciliation (Code: 0x3F2A)</span></span>. Review recommended before next <span class="demo-tooltip">harvest cycle<span class="tt-text">Automated data ingestion window (see Settings &gt; Sync &gt; Harvest)</span></span>.</span>
+          <span class="close-x" onclick="this.parentElement.style.display='none'">&times;</span>
+        </div>
+
+        <div class="demo-header">
+          <h2>Contact Book</h2>
+          <div class="demo-toolbar">
+            <input type="text" placeholder="Search by GUID..." title="Global Unique Identifier search">
+            <select title="Filter by Lifecycle Stage">
+              <option>All Lifecycle Stages</option>
+              <option>MQL (Marketing Qualified)</option>
+              <option>SQL (Sales Qualified)</option>
+              <option>SAL (Sales Accepted)</option>
+              <option>Recycled</option>
+              <option>Deprecated</option>
+            </select>
+            <select title="Segment">
+              <option>Segment: Default View</option>
+              <option>Segment: Cohort A (Pre-2024)</option>
+              <option>Segment: Cohort B (Post-2024)</option>
+              <option>Segment: Unassigned</option>
+            </select>
+            <button class="demo-btn demo-btn-primary" onclick="alert('&#10024; New Contact wizard requires CRM Tier 2+ permissions. Contact your org admin.')">+ New</button>
+            <button class="demo-btn demo-btn-warn" title="Bulk actions disabled during sync window">Bulk Actions</button>
+            <button class="demo-btn demo-btn-mystery" onclick="alert('Optimization complete. 0 contacts affected.')">&#10024; Optimize</button>
+          </div>
+        </div>
+
+        <div class="demo-toggle-row">
+          <label><span class="toggle-switch on" onclick="this.classList.toggle('on')"></span> Show Active</label>
+          <label><span class="toggle-switch" onclick="this.classList.toggle('on')"></span> Exclude Suppressed</label>
+          <label><span class="toggle-switch on" onclick="this.classList.toggle('on')"></span> Enable Smart Dedup</label>
+          <label><span class="toggle-switch" onclick="this.classList.toggle('on')"></span> Inverse Filter</label>
+          <span style="color:#bbb; font-size:11px; margin-left:8px;">Tip: Hold Shift+Alt to multi-toggle</span>
+        </div>
+
+        <table class="demo-table">
+          <thead>
+            <tr>
+              <th><input type="checkbox" class="cb" title="Select all (page only, not global)"></th>
+              <th onclick="alert('Sort temporarily unavailable during re-index. Try again in ~15 min.')">Name &#8693;</th>
+              <th>Email</th>
+              <th onclick="alert('Phone sort requires Data Governance approval.')">Phone &#8693;</th>
+              <th>Company</th>
+              <th><span class="demo-tooltip">Score<span class="tt-text">Composite engagement index (weighted: 40% recency, 30% frequency, 20% monetary, 10% vibes)</span></span></th>
+              <th>Tag</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><input type="checkbox" class="cb"></td>
+              <td><span class="avatar" style="background:#4a90d9">JR</span> James Rodriguez</td>
+              <td>j.rodriguez@acmecorp.com</td>
+              <td>(303) 555-0142</td>
+              <td>Acme Corp</td>
+              <td>87</td>
+              <td><span class="demo-tag demo-tag-vip">VIP</span></td>
+              <td><span class="status-dot" style="background:#4caf50"></span>Active</td>
+              <td class="actions-cell">
+                <button title="Edit" onclick="editContact(0)">&#9998;</button>
+                <button title="Archive (soft-delete)">&#128451;</button>
+                <button title="Merge" onclick="alert('Select a second contact to merge into. Note: this action cannot be undone and will trigger a downstream webhook cascade.')">&#8644;</button>
+              </td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="cb"></td>
+              <td><span class="avatar" style="background:#e67e22">SK</span> Sarah Kim</td>
+              <td>s.kim@globexinc.io</td>
+              <td>(720) 555-0198</td>
+              <td>Globex Inc</td>
+              <td>64</td>
+              <td><span class="demo-tag demo-tag-new">New</span></td>
+              <td><span class="status-dot" style="background:#4caf50"></span>Active</td>
+              <td class="actions-cell">
+                <button title="Edit" onclick="editContact(1)">&#9998;</button>
+                <button title="Archive (soft-delete)">&#128451;</button>
+                <button title="Merge" onclick="alert('Select a second contact to merge into.')">&#8644;</button>
+              </td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="cb"></td>
+              <td><span class="avatar" style="background:#9b59b6">MP</span> Michael Patel</td>
+              <td>m.patel@initech.net</td>
+              <td>(415) 555-0167</td>
+              <td>Initech</td>
+              <td>45</td>
+              <td><span class="demo-tag demo-tag-none">--</span></td>
+              <td><span class="status-dot" style="background:#ff9800"></span>Pending</td>
+              <td class="actions-cell">
+                <button title="Edit" onclick="editContact(2)">&#9998;</button>
+                <button title="Archive (soft-delete)">&#128451;</button>
+                <button title="Merge">&#8644;</button>
+              </td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="cb"></td>
+              <td><span class="avatar" style="background:#27ae60">EW</span> Emily Watson</td>
+              <td>emily.w@umbrella.co</td>
+              <td>(212) 555-0234</td>
+              <td>Umbrella LLC</td>
+              <td>92</td>
+              <td><span class="demo-tag demo-tag-vip">VIP</span></td>
+              <td><span class="status-dot" style="background:#4caf50"></span>Active</td>
+              <td class="actions-cell">
+                <button title="Edit" onclick="editContact(3)">&#9998;</button>
+                <button title="Archive (soft-delete)">&#128451;</button>
+                <button title="Merge">&#8644;</button>
+              </td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="cb"></td>
+              <td><span class="avatar" style="background:#e74c3c">DL</span> David Lee</td>
+              <td>d.lee@wayneent.com</td>
+              <td>+1-303-555-0[REDACTED]</td>
+              <td>Wayne Enterprises</td>
+              <td>38</td>
+              <td><span class="demo-tag demo-tag-flag">Flagged</span></td>
+              <td><span class="status-dot" style="background:#f44336"></span>Suppressed</td>
+              <td class="actions-cell">
+                <button title="Edit (restricted)" style="opacity:0.4; cursor:not-allowed;" onclick="alert('This contact is in Suppressed status. Editing requires Legal team approval. Submit a request at legal-ops@internal.')">&#9998;</button>
+                <button title="Archive (soft-delete)">&#128451;</button>
+                <button title="Unsuppress — requires Legal review" onclick="alert('Unsuppress request submitted. Avg. review time: 3-5 business days.')">&#9888;</button>
+              </td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="cb"></td>
+              <td><span class="avatar" style="background:#3498db">AT</span> Aisha Thompson</td>
+              <td>a.thompson@sterling.co</td>
+              <td>(720) 555-0311</td>
+              <td>Sterling Cooper</td>
+              <td>76</td>
+              <td><span class="demo-tag demo-tag-new">New</span></td>
+              <td><span class="status-dot" style="background:#4caf50"></span>Active</td>
+              <td class="actions-cell">
+                <button title="Edit" onclick="editContact(5)">&#9998;</button>
+                <button title="Archive (soft-delete)">&#128451;</button>
+                <button title="Merge">&#8644;</button>
+              </td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="cb"></td>
+              <td><span class="avatar" style="background:#95a5a6">RN</span> Robert Nguyen</td>
+              <td>r.nguyen@initech.net</td>
+              <td>(303) 555-0289</td>
+              <td>Initech</td>
+              <td>51</td>
+              <td><span class="demo-tag demo-tag-none">--</span></td>
+              <td><span class="status-dot" style="background:#ff9800"></span>Pending</td>
+              <td class="actions-cell">
+                <button title="Edit" onclick="editContact(6)">&#9998;</button>
+                <button title="Archive (soft-delete)">&#128451;</button>
+                <button title="Merge">&#8644;</button>
+              </td>
+            </tr>
+            <tr style="background: #fffdf0;">
+              <td><input type="checkbox" class="cb"></td>
+              <td><span class="avatar" style="background:#f39c12">CJ</span> <span style="color:#cc8800">Carlos Jenkins &#9734;</span></td>
+              <td>c.jenkins@acmecorp.com</td>
+              <td>(415) 555-0102</td>
+              <td>Acme Corp</td>
+              <td><span style="color:#cc8800; font-weight:700;">&#9650; 99</span></td>
+              <td><span class="demo-tag demo-tag-vip">VIP</span></td>
+              <td><span class="status-dot" style="background:#4caf50"></span>Active</td>
+              <td class="actions-cell">
+                <button title="Edit" onclick="editContact(7)">&#9998;</button>
+                <button title="Archive (soft-delete)">&#128451;</button>
+                <button title="Nominate for Priority Queue" onclick="alert('Carlos Jenkins nominated. Priority Queue processing will begin at next sync window.')">&#11088;</button>
+              </td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="cb"></td>
+              <td><span class="avatar" style="background:#1abc9c">LM</span> Lisa Martinez</td>
+              <td>l.martinez@globexinc.io</td>
+              <td>(720) 555-0445</td>
+              <td>Globex Inc</td>
+              <td>29</td>
+              <td><span class="demo-tag demo-tag-flag">Flagged</span></td>
+              <td><span class="status-dot" style="background:#9e9e9e"></span>Inactive</td>
+              <td class="actions-cell">
+                <button title="Edit" onclick="editContact(8)">&#9998;</button>
+                <button title="Reactivate — may trigger re-enrollment" onclick="alert('Reactivation will re-enroll contact in all active sequences. Continue? (This dialog is informational only — the action has already been queued.)')">&#8635;</button>
+                <button title="Merge">&#8644;</button>
+              </td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="cb"></td>
+              <td><span class="avatar" style="background:#8e44ad">TB</span> Tom Bradley</td>
+              <td>t.bradley@umbrella.co</td>
+              <td>(212) 555-0178</td>
+              <td>Umbrella LLC</td>
+              <td>83</td>
+              <td><span class="demo-tag demo-tag-none">--</span></td>
+              <td><span class="status-dot" style="background:#4caf50"></span>Active</td>
+              <td class="actions-cell">
+                <button title="Edit" onclick="editContact(9)">&#9998;</button>
+                <button title="Archive (soft-delete)">&#128451;</button>
+                <button title="Merge">&#8644;</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="demo-footer">
+          <div>
+            Showing 1&ndash;10 of 10 contacts &nbsp;|&nbsp;
+            Rows per page:
+            <select>
+              <option>10</option>
+              <option>25</option>
+              <option>50</option>
+              <option>&#8734; (not recommended)</option>
+            </select>
+            &nbsp;|&nbsp;
+            <span style="color:#bbb; font-size:11px;">Last synced: 47 min ago &bull; Next harvest: ~2h 13m</span>
+          </div>
+          <div class="demo-pagination">
+            <button disabled>&laquo;</button>
+            <button class="active">1</button>
+            <button disabled>&raquo;</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== DEMO: Edit Contact ===== -->
+    <div class="screen" id="screen-demo-edit">
+      <style>
+        .edit-wrap { padding: 28px; max-width: 900px; }
+        .edit-topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .edit-topbar h2 { font-size: 20px; font-weight: 700; color: #1b2534; }
+        .edit-back { background: none; border: 1px solid #ddd; border-radius: 4px; padding: 6px 14px; font-size: 12px; cursor: pointer; color: #555; }
+        .edit-back:hover { background: #f5f5f5; }
+        .edit-card { background: #fff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); padding: 24px; margin-bottom: 20px; }
+        .edit-card h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.8px; color: #888; margin-bottom: 16px; font-weight: 600; }
+        .edit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .edit-field { display: flex; flex-direction: column; gap: 4px; }
+        .edit-field label { font-size: 11px; color: #777; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 4px; }
+        .edit-field label .req { color: #cc3333; }
+        .edit-field label .opt { color: #bbb; font-weight: 400; text-transform: none; font-size: 10px; letter-spacing: 0; }
+        .edit-field input, .edit-field select, .edit-field textarea { padding: 8px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; font-family: inherit; }
+        .edit-field input:focus, .edit-field select:focus, .edit-field textarea:focus { outline: none; border-color: #00c4d4; box-shadow: 0 0 0 2px rgba(0,196,212,0.15); }
+        .edit-field input:disabled { background: #f5f5f5; color: #999; cursor: not-allowed; }
+        .edit-field .field-hint { font-size: 10px; color: #bbb; }
+        .edit-field .field-warn { font-size: 10px; color: #cc8800; }
+        .edit-field-full { grid-column: 1 / -1; }
+        .edit-tabs { display: flex; gap: 0; border-bottom: 2px solid #eee; margin-bottom: 20px; }
+        .edit-tab { padding: 10px 18px; font-size: 12px; font-weight: 600; color: #999; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.15s; }
+        .edit-tab:hover { color: #555; }
+        .edit-tab.active { color: #00c4d4; border-bottom-color: #00c4d4; }
+        .edit-tab.disabled { color: #ddd; cursor: not-allowed; }
+        .edit-tab .tab-badge { background: #e74c3c; color: #fff; font-size: 9px; border-radius: 8px; padding: 1px 5px; margin-left: 4px; font-weight: 700; }
+        .edit-section { display: none; }
+        .edit-section.active { display: block; }
+        .edit-actions { display: flex; gap: 10px; justify-content: space-between; align-items: center; margin-top: 24px; padding-top: 20px; border-top: 1px solid #eee; }
+        .edit-actions-left { display: flex; gap: 8px; }
+        .edit-actions-right { display: flex; gap: 8px; align-items: center; }
+        .edit-btn-save { background: #00c4d4; color: #fff; border: none; padding: 8px 20px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; }
+        .edit-btn-save:hover { background: #00b0be; }
+        .edit-btn-cancel { background: #fff; color: #555; border: 1px solid #ddd; padding: 8px 20px; border-radius: 4px; font-size: 12px; cursor: pointer; }
+        .edit-btn-danger { background: #fff; color: #cc3333; border: 1px solid #cc3333; padding: 8px 16px; border-radius: 4px; font-size: 11px; cursor: pointer; }
+        .edit-btn-mystery { background: #f0f0f0; color: #999; border: none; padding: 8px 16px; border-radius: 4px; font-size: 11px; cursor: pointer; }
+        .edit-autosave { font-size: 10px; color: #bbb; display: flex; align-items: center; gap: 4px; }
+        .edit-autosave .dot { width: 6px; height: 6px; border-radius: 50%; background: #4caf50; display: inline-block; }
+        .edit-history { background: #f9f9f9; border-radius: 4px; padding: 12px 14px; font-size: 11px; color: #999; line-height: 1.8; }
+        .edit-history .ts { color: #bbb; margin-right: 6px; }
+        .edit-history .actor { color: #555; font-weight: 600; }
+        .edit-compliance-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+        .edit-compliance-card { background: #f9f9f9; border-radius: 4px; padding: 12px; font-size: 11px; }
+        .edit-compliance-card .cc-label { font-weight: 600; color: #555; margin-bottom: 4px; }
+        .edit-compliance-card .cc-val { color: #999; }
+        .edit-compliance-card .cc-val.warn { color: #cc8800; }
+        .edit-compliance-card .cc-val.danger { color: #cc3333; }
+      </style>
+
+      <div class="edit-wrap">
+        <div class="edit-topbar">
+          <h2 id="editContactTitle">Edit Contact</h2>
+          <button class="edit-back" onclick="navigate('demo')">&larr; Back to Contacts</button>
+        </div>
+
+        <div class="edit-tabs">
+          <div class="edit-tab active" onclick="switchEditTab(this, 'edit-general')">General</div>
+          <div class="edit-tab" onclick="switchEditTab(this, 'edit-extended')">Extended Attributes</div>
+          <div class="edit-tab" onclick="switchEditTab(this, 'edit-compliance')">Compliance <span class="tab-badge">2</span></div>
+          <div class="edit-tab" onclick="switchEditTab(this, 'edit-history')">Audit Trail</div>
+          <div class="edit-tab disabled" onclick="alert('Integrations tab requires Enterprise plan.')">Integrations</div>
+          <div class="edit-tab disabled" onclick="alert('Webhooks configuration is managed at the org level. Contact your admin.')">Webhooks</div>
+        </div>
+
+        <!-- General Tab -->
+        <div class="edit-section active" id="edit-general">
+          <div class="edit-card">
+            <h3>Identity</h3>
+            <div class="edit-grid">
+              <div class="edit-field">
+                <label>Internal GUID</label>
+                <input type="text" id="editGuid" disabled value="7f3a2c91-b8e4-4d1f-a09c-3e7f5b2d8a16">
+                <span class="field-hint">System-generated. Not editable.</span>
+              </div>
+              <div class="edit-field">
+                <label>External Reference ID <span class="opt">(optional)</span></label>
+                <input type="text" id="editExtRef" placeholder="e.g. SF-00482, HUB-29481">
+                <span class="field-hint">Maps to CRM source record. Must match regex: ^[A-Z]{2,4}-\d+$</span>
+              </div>
+              <div class="edit-field">
+                <label>First Name <span class="req">*</span></label>
+                <input type="text" id="editFirstName">
+              </div>
+              <div class="edit-field">
+                <label>Last Name <span class="req">*</span></label>
+                <input type="text" id="editLastName">
+              </div>
+              <div class="edit-field">
+                <label>Display Name Override <span class="opt">(optional)</span></label>
+                <input type="text" id="editDisplayName" placeholder="Leave blank to auto-generate">
+                <span class="field-hint">If set, overrides First + Last in all UI surfaces except reports.</span>
+              </div>
+              <div class="edit-field">
+                <label>Name Prefix / Suffix</label>
+                <div style="display:flex; gap:8px;">
+                  <select id="editPrefix" style="width:80px;">
+                    <option value="">--</option>
+                    <option>Mr.</option>
+                    <option>Mrs.</option>
+                    <option>Ms.</option>
+                    <option>Dr.</option>
+                    <option>Prof.</option>
+                    <option>Mx.</option>
+                    <option>Hon.</option>
+                    <option>Rev.</option>
+                  </select>
+                  <select id="editSuffix" style="width:80px;">
+                    <option value="">--</option>
+                    <option>Jr.</option>
+                    <option>Sr.</option>
+                    <option>II</option>
+                    <option>III</option>
+                    <option>IV</option>
+                    <option>Esq.</option>
+                    <option>PhD</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="edit-card">
+            <h3>Contact Information</h3>
+            <div class="edit-grid">
+              <div class="edit-field">
+                <label>Primary Email <span class="req">*</span></label>
+                <input type="email" id="editEmail">
+                <span class="field-warn">&#9888; Changing email triggers re-verification flow (24-48h)</span>
+              </div>
+              <div class="edit-field">
+                <label>Secondary Email</label>
+                <input type="email" id="editEmail2" placeholder="Optional backup email">
+              </div>
+              <div class="edit-field">
+                <label>Phone (E.164 format) <span class="req">*</span></label>
+                <input type="text" id="editPhone" placeholder="+13035550142">
+                <span class="field-hint">Must include country code. Formatting: +[country][number]</span>
+              </div>
+              <div class="edit-field">
+                <label>Phone Type</label>
+                <select id="editPhoneType">
+                  <option>Mobile</option>
+                  <option>Work</option>
+                  <option>Home</option>
+                  <option>VoIP</option>
+                  <option>Fax</option>
+                  <option>Pager</option>
+                  <option>Satellite</option>
+                  <option>Unknown</option>
+                </select>
+              </div>
+              <div class="edit-field">
+                <label>Preferred Contact Method</label>
+                <select id="editContactMethod">
+                  <option>No Preference</option>
+                  <option>Email Only</option>
+                  <option>Phone Only</option>
+                  <option>SMS Only</option>
+                  <option>Direct Mail</option>
+                  <option>Do Not Contact</option>
+                </select>
+              </div>
+              <div class="edit-field">
+                <label>Timezone <span class="opt">(auto-detected)</span></label>
+                <input type="text" id="editTimezone" disabled value="America/Denver (UTC-7)">
+              </div>
+            </div>
+          </div>
+
+          <div class="edit-card">
+            <h3>Organization</h3>
+            <div class="edit-grid">
+              <div class="edit-field">
+                <label>Company</label>
+                <input type="text" id="editCompany">
+              </div>
+              <div class="edit-field">
+                <label>Job Title</label>
+                <input type="text" id="editTitle" placeholder="e.g. VP of Marketing">
+              </div>
+              <div class="edit-field">
+                <label>Department</label>
+                <select id="editDept">
+                  <option value="">Select...</option>
+                  <option>Engineering</option>
+                  <option>Marketing</option>
+                  <option>Sales</option>
+                  <option>Customer Success</option>
+                  <option>Operations</option>
+                  <option>Finance</option>
+                  <option>Legal</option>
+                  <option>HR</option>
+                  <option>Other / Unknown</option>
+                </select>
+              </div>
+              <div class="edit-field">
+                <label>Seniority Level</label>
+                <select id="editSeniority">
+                  <option value="">Select...</option>
+                  <option>C-Suite</option>
+                  <option>VP</option>
+                  <option>Director</option>
+                  <option>Manager</option>
+                  <option>Senior IC</option>
+                  <option>IC</option>
+                  <option>Intern</option>
+                  <option>Unknown</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="edit-card">
+            <h3>Classification</h3>
+            <div class="edit-grid">
+              <div class="edit-field">
+                <label>Lifecycle Stage</label>
+                <select id="editLifecycle">
+                  <option>Lead</option>
+                  <option>MQL</option>
+                  <option>SQL</option>
+                  <option>SAL</option>
+                  <option>Opportunity</option>
+                  <option>Customer</option>
+                  <option>Evangelist</option>
+                  <option>Recycled</option>
+                  <option>Deprecated</option>
+                </select>
+                <span class="field-warn">&#9888; Changing lifecycle stage will notify assigned sales rep</span>
+              </div>
+              <div class="edit-field">
+                <label>Tag</label>
+                <select id="editTag">
+                  <option value="">None</option>
+                  <option value="vip">VIP</option>
+                  <option value="new">New</option>
+                  <option value="flagged">Flagged</option>
+                </select>
+              </div>
+              <div class="edit-field">
+                <label>Status</label>
+                <select id="editStatus">
+                  <option>Active</option>
+                  <option>Pending</option>
+                  <option>Inactive</option>
+                  <option disabled>Suppressed (requires Legal)</option>
+                </select>
+              </div>
+              <div class="edit-field">
+                <label>Score Override <span class="opt">(leave blank for auto-calc)</span></label>
+                <input type="number" id="editScore" placeholder="0-100" min="0" max="100">
+                <span class="field-hint">Manual override expires after 90 days, then reverts to algorithmic score.</span>
+              </div>
+              <div class="edit-field">
+                <label>Priority Queue Eligible</label>
+                <select id="editPriority">
+                  <option>Auto (system-determined)</option>
+                  <option>Force Yes</option>
+                  <option>Force No</option>
+                </select>
+              </div>
+              <div class="edit-field">
+                <label>Segment Assignment</label>
+                <input type="text" disabled value="Cohort B (Post-2024)" id="editSegment">
+                <span class="field-hint">Segments are recalculated nightly. Manual override not supported.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Extended Attributes Tab -->
+        <div class="edit-section" id="edit-extended">
+          <div class="edit-card">
+            <h3>Custom Properties</h3>
+            <div class="edit-grid">
+              <div class="edit-field">
+                <label>cf_lead_source</label>
+                <input type="text" placeholder="e.g. webinar_2025Q4, paid_search">
+                <span class="field-hint">Custom field. Accepts freeform text. Max 255 chars.</span>
+              </div>
+              <div class="edit-field">
+                <label>cf_territory_code</label>
+                <input type="text" placeholder="e.g. US-WEST-2, EMEA-DACH">
+              </div>
+              <div class="edit-field">
+                <label>cf_nps_last</label>
+                <input type="number" placeholder="0-10">
+              </div>
+              <div class="edit-field">
+                <label>cf_contract_tier</label>
+                <select>
+                  <option>null</option>
+                  <option>Starter</option>
+                  <option>Professional</option>
+                  <option>Enterprise</option>
+                  <option>Strategic</option>
+                </select>
+              </div>
+              <div class="edit-field edit-field-full">
+                <label>cf_internal_notes</label>
+                <textarea rows="3" placeholder="Internal notes (not synced to CRM). Supports plain text only — no markdown or HTML."></textarea>
+              </div>
+            </div>
+          </div>
+          <div class="edit-card">
+            <h3>Linked Identifiers</h3>
+            <div class="edit-grid">
+              <div class="edit-field">
+                <label>LinkedIn URL</label>
+                <input type="text" placeholder="https://linkedin.com/in/...">
+              </div>
+              <div class="edit-field">
+                <label>X (Twitter) Handle</label>
+                <input type="text" placeholder="@handle">
+              </div>
+              <div class="edit-field">
+                <label>MAID (Mobile Ad ID)</label>
+                <input type="text" disabled value="—" title="MAID is append-only via File Enrichment. Cannot be manually set.">
+                <span class="field-hint">Read-only. Populated via enrichment pipeline.</span>
+              </div>
+              <div class="edit-field">
+                <label>SHA-256 Email Hash</label>
+                <input type="text" disabled value="" id="editEmailHash">
+                <span class="field-hint">Auto-computed from primary email. Not directly editable.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Compliance Tab -->
+        <div class="edit-section" id="edit-compliance">
+          <div class="edit-card">
+            <h3>Consent & Suppression</h3>
+            <div class="edit-compliance-grid">
+              <div class="edit-compliance-card">
+                <div class="cc-label">GDPR Consent</div>
+                <div class="cc-val" id="editGdpr">Granted (2025-08-14)</div>
+              </div>
+              <div class="edit-compliance-card">
+                <div class="cc-label">CCPA Opt-Out</div>
+                <div class="cc-val">Not Requested</div>
+              </div>
+              <div class="edit-compliance-card">
+                <div class="cc-label">CAN-SPAM Suppression</div>
+                <div class="cc-val">Clear</div>
+              </div>
+              <div class="edit-compliance-card">
+                <div class="cc-label">CASL Consent (Canada)</div>
+                <div class="cc-val warn">Implied — expires 2026-08-14</div>
+              </div>
+              <div class="edit-compliance-card">
+                <div class="cc-label">Data Retention Class</div>
+                <div class="cc-val">Standard (36 months)</div>
+              </div>
+              <div class="edit-compliance-card">
+                <div class="cc-label">Right to Erasure Requests</div>
+                <div class="cc-val">0 pending</div>
+              </div>
+            </div>
+            <div style="margin-top:16px; font-size:11px; color:#bbb;">
+              Compliance fields are managed by the Data Governance team. To request changes, submit a ticket to <span style="color:#999; text-decoration:underline; cursor:pointer;" onclick="alert('Redirecting to Legal ticketing system... (not configured in this environment)')">legal-ops@internal</span>.
+            </div>
+          </div>
+        </div>
+
+        <!-- Audit Trail Tab -->
+        <div class="edit-section" id="edit-history">
+          <div class="edit-card">
+            <h3>Change History</h3>
+            <div class="edit-history">
+              <div><span class="ts">2026-03-25 09:14</span> <span class="actor">System</span> — Score recalculated: 85 → 87 (engagement uplift)</div>
+              <div><span class="ts">2026-03-24 16:02</span> <span class="actor">j.martinez</span> — Tag changed: New → VIP</div>
+              <div><span class="ts">2026-03-22 11:30</span> <span class="actor">System</span> — Email verified (bounce check passed)</div>
+              <div><span class="ts">2026-03-20 08:45</span> <span class="actor">a.thompson</span> — Lifecycle: Lead → MQL</div>
+              <div><span class="ts">2026-03-18 14:12</span> <span class="actor">System</span> — Segment reassigned: Cohort A → Cohort B (nightly batch)</div>
+              <div><span class="ts">2026-03-15 09:00</span> <span class="actor">import-service</span> — Record created via File Enrichment (batch: FE-20260315-0042)</div>
+            </div>
+            <div style="margin-top:12px; font-size:11px; color:#bbb;">
+              Showing last 30 days. <span style="color:#00c4d4; cursor:pointer;" onclick="alert('Full audit export requires Compliance Officer role. Your current role: Standard User.')">Export full audit log</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="edit-actions">
+          <div class="edit-actions-left">
+            <button class="edit-btn-danger" onclick="alert('Soft-delete queued. Contact will remain in suppressed state for 30 days before permanent deletion. To cancel, file a recovery request within the retention window.')">Delete Contact</button>
+            <button class="edit-btn-mystery" onclick="alert('Deduplication scan complete. No duplicates found within threshold (confidence > 0.82).')">Run Dedup Check</button>
+          </div>
+          <div class="edit-actions-right">
+            <span class="edit-autosave"><span class="dot"></span> Autosave enabled</span>
+            <button class="edit-btn-cancel" onclick="navigate('demo')">Cancel</button>
+            <button class="edit-btn-save" onclick="alert('Changes saved successfully.\n\nNote: Some fields may take up to 15 minutes to propagate across all connected systems. Score recalculation will occur at next sync window.'); navigate('demo')">Save Changes</button>
           </div>
         </div>
       </div>
@@ -1465,6 +2148,51 @@ const downloadSvg = '<svg viewBox="0 0 18 18"><path d="M9 3v9M5 9l4 4 4-4" fill=
 const trashSvg = '<svg viewBox="0 0 18 18"><path d="M3 5h12M7 5V3h4v2M5 5v10h8V5" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><line x1="7.5" y1="8" x2="7.5" y2="12" stroke="currentColor" stroke-width="1.2"/><line x1="10.5" y1="8" x2="10.5" y2="12" stroke="currentColor" stroke-width="1.2"/></svg>';
 
 // ===== Navigation =====
+// ===== Demo Contact Data =====
+const demoContacts = [
+  { first: 'James', last: 'Rodriguez', email: 'j.rodriguez@acmecorp.com', phone: '+13035550142', company: 'Acme Corp', score: 87, tag: 'vip', status: 'Active' },
+  { first: 'Sarah', last: 'Kim', email: 's.kim@globexinc.io', phone: '+17205550198', company: 'Globex Inc', score: 64, tag: 'new', status: 'Active' },
+  { first: 'Michael', last: 'Patel', email: 'm.patel@initech.net', phone: '+14155550167', company: 'Initech', score: 45, tag: '', status: 'Pending' },
+  { first: 'Emily', last: 'Watson', email: 'emily.w@umbrella.co', phone: '+12125550234', company: 'Umbrella LLC', score: 92, tag: 'vip', status: 'Active' },
+  { first: 'David', last: 'Lee', email: 'd.lee@wayneent.com', phone: '+13035550000', company: 'Wayne Enterprises', score: 38, tag: 'flagged', status: 'Suppressed' },
+  { first: 'Aisha', last: 'Thompson', email: 'a.thompson@sterling.co', phone: '+17205550311', company: 'Sterling Cooper', score: 76, tag: 'new', status: 'Active' },
+  { first: 'Robert', last: 'Nguyen', email: 'r.nguyen@initech.net', phone: '+13035550289', company: 'Initech', score: 51, tag: '', status: 'Pending' },
+  { first: 'Carlos', last: 'Jenkins', email: 'c.jenkins@acmecorp.com', phone: '+14155550102', company: 'Acme Corp', score: 99, tag: 'vip', status: 'Active' },
+  { first: 'Lisa', last: 'Martinez', email: 'l.martinez@globexinc.io', phone: '+17205550445', company: 'Globex Inc', score: 29, tag: 'flagged', status: 'Inactive' },
+  { first: 'Tom', last: 'Bradley', email: 't.bradley@umbrella.co', phone: '+12125550178', company: 'Umbrella LLC', score: 83, tag: '', status: 'Active' },
+];
+
+function editContact(idx) {
+  const c = demoContacts[idx];
+  if (!c) return;
+  document.getElementById('editContactTitle').textContent = 'Edit Contact — ' + c.first + ' ' + c.last;
+  document.getElementById('editFirstName').value = c.first;
+  document.getElementById('editLastName').value = c.last;
+  document.getElementById('editEmail').value = c.email;
+  document.getElementById('editPhone').value = c.phone;
+  document.getElementById('editCompany').value = c.company;
+  document.getElementById('editScore').value = c.score;
+  document.getElementById('editTag').value = c.tag;
+  const statusSel = document.getElementById('editStatus');
+  for (let i = 0; i < statusSel.options.length; i++) {
+    if (statusSel.options[i].text === c.status) { statusSel.selectedIndex = i; break; }
+  }
+  // Reset to General tab
+  document.querySelectorAll('.edit-tab').forEach(t => t.classList.remove('active'));
+  document.querySelector('.edit-tab').classList.add('active');
+  document.querySelectorAll('.edit-section').forEach(s => s.classList.remove('active'));
+  document.getElementById('edit-general').classList.add('active');
+  navigate('demo-edit');
+}
+
+function switchEditTab(tabEl, sectionId) {
+  if (tabEl.classList.contains('disabled')) return;
+  document.querySelectorAll('.edit-tab').forEach(t => t.classList.remove('active'));
+  tabEl.classList.add('active');
+  document.querySelectorAll('.edit-section').forEach(s => s.classList.remove('active'));
+  document.getElementById(sectionId).classList.add('active');
+}
+
 function navigate(screen) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   const el = document.getElementById('screen-' + screen);
@@ -1480,9 +2208,13 @@ function navigate(screen) {
 
   // Sidebar highlights
   document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
-  document.getElementById('nav-enrich').classList.add('active');
-  if (screen === 'reports') {
-    document.getElementById('nav-reports').classList.add('active');
+  if (screen === 'demo' || screen === 'demo-edit') {
+    document.getElementById('nav-demo').classList.add('active');
+  } else {
+    document.getElementById('nav-enrich').classList.add('active');
+    if (screen === 'reports') {
+      document.getElementById('nav-reports').classList.add('active');
+    }
   }
 
   // Update mapped fields when entering confirm
