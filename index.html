@@ -359,6 +359,16 @@
   }
   .delete-modal .modal-btns { display: flex; gap: 12px; justify-content: center; }
 
+  /* Toast notification */
+  .toast {
+    position: fixed; top: 24px; left: 50%; transform: translateX(-50%) translateY(-100px);
+    background: #1b2534; color: #fff; padding: 12px 24px; border-radius: 8px;
+    font-size: 13.5px; font-weight: 500; z-index: 300;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2); opacity: 0;
+    transition: transform 0.3s ease, opacity 0.3s ease; pointer-events: none;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
   /* ========== REPORTS ========== */
   .reports-page { padding: 28px 40px; }
   .reports-page h2 { font-size: 20px; font-weight: 700; color: #1b2534; margin-bottom: 20px; }
@@ -1852,6 +1862,7 @@
 </div>
 
 <!-- Processing Modal -->
+<div class="toast" id="toastNotification"></div>
 <div class="modal-overlay" id="processingModal">
   <div class="modal">
     <div class="ios-spinner">
@@ -2412,7 +2423,7 @@ function renderReports() {
     }
     tr.innerHTML = `
       <td><input type="checkbox" class="report-check" onchange="checkBulkActions()"></td>
-      <td style="cursor:pointer" onclick="if('${r.status}'==='completed'){navigate('summary');document.getElementById('summaryFileName').textContent='${r.name}'}else if('${r.status}'==='processing'||'${r.status}'==='queued'){alert('This report is not ready yet. Please check back when processing is complete.')}">${r.name}</td>
+      <td style="cursor:pointer" onclick="if('${r.status}'==='completed'){navigate('summary');document.getElementById('summaryFileName').textContent='${r.name}'}else if('${r.status}'==='processing'||'${r.status}'==='queued'){showToast('This report is not ready yet. Please check back when processing is complete.')}">${r.name}</td>
       <td>${r.date}</td>
       <td>${statusHtml}</td>
       <td>${dlHtml}</td>
@@ -2440,6 +2451,13 @@ function showDownloadNote(filename) {
 }
 
 // ===== Delete Modal =====
+function showToast(msg) {
+  const t = document.getElementById('toastNotification');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
 function showDeleteModal(name, index) {
   document.getElementById('deleteFileName').textContent = name;
   deleteTargetRow = index;
